@@ -5,6 +5,7 @@ use Slick::Util;
 use Types::Standard qw(Str HashRef);
 use Module::Runtime qw(require_module);
 use URI::Query;
+use JSON::Tiny qw(encode_json);
 
 # STATIC
 sub REDIRECT { return 'R'; }
@@ -59,7 +60,8 @@ sub BUILD {
 }
 
 sub to_psgi {
-    return [ values( %{ shift->response } ) ];
+    my $response = shift->response;
+    return [ $response->{status}, $response->{headers}, $response->{body} ];
 }
 
 sub status {
@@ -77,11 +79,11 @@ sub json {
 
     require_module('JSON::Tiny');
 
-    my %headers = %{ $self->response->{headers} };
+    my %headers = @{ $self->response->{headers} };
     $headers{'Content-Type'} = 'application/json; encoding=utf8';
     $self->response->{headers} = [%headers];
 
-    $self->response->body = [ encode_json($body) ];
+    $self->response->{body} = [ encode_json($body) ];
 
     return $self;
 }
@@ -93,6 +95,13 @@ sub body {
     $self->response->body = [$body];
 
     return $self;
+}
+
+sub indexable_uri {
+    my $self = shift;
+    return
+      lc( $self->request->{REQUEST_METHOD} ) . ':'
+      . $self->request->{REQUEST_URI};
 }
 
 1;
