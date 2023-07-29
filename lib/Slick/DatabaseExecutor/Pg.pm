@@ -6,15 +6,15 @@ use Moo;
 use SQL::Abstract;
 use Carp qw(croak);
 
-has sql => {
+has sql => (
     is      => 'ro',
     isa     => 'SQL::Abstract',
     default => sub { SQL::Abstract->new; }
-};
+);
 
-has connection => { is => 'ro' };
+has connection => ( is => 'ro' );
 
-has dbi => { is => 'ro' };
+has dbi => ( is => 'ro' );
 
 sub BUILD {
     my $self = shift;

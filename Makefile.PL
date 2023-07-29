@@ -30,7 +30,11 @@ WriteMakefile(
         'Module::Runtime' => '0.016',
         'Carp'            => '0',
         'URI'             => '5.19',
-        'Tree::Trie'      => '1.9'
+        'Tree::Trie'      => '1.9',
+        'DBI'             => '1.643',
+        'JSON::Tiny'      => '0.58',
+        'Try::Tiny'       => '0',
+        'URI::Query'      => '0.16'
     },
     text => { TESTS => 't/*.t t/*/*.t it/*.t it/*/*.t' }
 );

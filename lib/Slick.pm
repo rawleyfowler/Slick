@@ -7,6 +7,7 @@ use Types::Standard qw(HashRef ArrayRef Int Str);
 use Module::Runtime qw(require_module);
 use Carp            qw(croak);
 use Tree::Trie;
+use Try::Tiny;
 use Slick::Context;
 
 our $VERSION = '0.001';
@@ -72,49 +73,53 @@ has _event_handlers => (
     isa  => HashRef
 );
 
-sub _convert_context {
-    my $self    = shift;
-    my $context = shift;
-}
-
 sub _handle {
     my $self    = shift;
     my $request = shift;
 
     my $context = Slick::Context->new( request => $request );
 
-    $context->log_request;
+    # TODO: Logging
+    # $self->logger->log_request($context);
 
-    for ( split //x, $request->{URI} ) {
-        my (%routes) = $self->handlers->lookup_data($_);
+    try {
+        for ( split //x, $request->{URI} ) {
+            my (%routes) = $self->handlers->lookup_data($_);
 
-        next if ( len( keys %routes ) > 1 );
+            return [ '404', [], ['404 Not Found'] ]
+              unless ( len( keys %routes ) );
 
-        return [ '404', [], ['404 Not Found'] ] unless ( len( keys %routes ) );
+            my $callback = ( values %routes )[0];
 
-        my $callback = ( values %routes )[0];
-
-        for ( @{ $self->_event_handlers->{before_dispatch} } ) {
-            if ( !$_->( $self, $context ) ) {
-                goto DONE;
+            for ( @{ $self->_event_handlers->{before_dispatch} } ) {
+                if ( !$_->( $self, $context ) ) {
+                    goto DONE;
+                }
             }
-        }
 
-        $callback->( $self, $context );
+            $callback->( $self, $context );
 
-        for ( @{ $self->_event_handlers->{after_dispatch} } ) {
-            if ( !$_->( $self, $context ) ) {
-                goto DONE;
+            for ( @{ $self->_event_handlers->{after_dispatch} } ) {
+                if ( !$_->( $self, $context ) ) {
+                    goto DONE;
+                }
             }
-        }
 
-        last;
+            last;
+        }
+    }
+    catch {
+        $context = Slick::Context->new( request => $request );
+        $context->status(500);
+        $context->body($_) if $self->env eq 'dev';
     }
 
   DONE:
-    $context->log_response;
 
-    return $self->_convert_context($context);
+    # TODO: Logging
+    # $context->log_response;
+
+    return $context->to_psgi;
 }
 
 sub BUILD {
