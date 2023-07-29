@@ -15,6 +15,11 @@ has conn => (
 
 has dbh => ( is => 'ro' );
 
+has type => (
+    is  => 'ro',
+    isa => Str
+);
+
 sub BUILD {
     my $self = shift;
 
@@ -22,13 +27,12 @@ sub BUILD {
 
     my $uri = URI->new( $self->conn );
 
-    if (   $uri->scheme eq 'postgresql'
-        || $uri->scheme eq 'postgres' )
-    {
-        $self->{dbh} = Slick::Database::Pg->new($uri);
+    if ( $uri->scheme =~ /^postgres(?:ql)?$/x ) {
+        $self->{type} = 'Pg';
+        $self->{dbh}  = Slick::DatabaseExecutor::Pg->new( connection => $uri );
     }
     else {
-        croak qq{Unknown scheme for connection: } . $uri->scheme;
+        croak qq{Unknown scheme or un-supported database: } . $uri->scheme;
     }
 
     return $self;

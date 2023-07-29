@@ -29,7 +29,8 @@ WriteMakefile(
         'Type::Tiny'      => '2.004000',
         'Module::Runtime' => '0.016',
         'Carp'            => '0',
-        'URI'             => '5.19'
+        'URI'             => '5.19',
+        'Tree::Trie'      => '1.9'
     },
     text => { TESTS => 't/*.t t/*/*.t it/*.t it/*/*.t' }
 );

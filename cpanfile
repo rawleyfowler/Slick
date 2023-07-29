@@ -5,3 +5,5 @@ requires 'Type::Tiny', '2.004000';
 requires 'Module::Runtime', '0.016';
 requires 'Carp', 0;
 requires 'URI', '5.19';
+requires 'SQL::Abstract', '2.000001';
+requires 'Tree::Trie', '1.9';

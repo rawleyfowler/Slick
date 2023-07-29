@@ -6,6 +6,8 @@ use Moo;
 use Types::Standard qw(HashRef ArrayRef Int Str);
 use Module::Runtime qw(require_module);
 use Carp            qw(croak);
+use Tree::Trie;
+use Slick::Context;
 
 our $VERSION = '0.001';
 
@@ -46,10 +48,8 @@ has env => (
 );
 
 has server => (
-    is      => 'ro',
-    isa     => 'HTTP::Server::PSGI',
-    lazy    => 1,
-    builder => '_make_server'
+    is   => 'ro',
+    lazy => 1
 );
 
 has dbs => (
@@ -62,14 +62,60 @@ has dbs => (
 has handlers => (
     is      => 'rw',
     lazy    => 1,
-    isa     => HashRef,
-    default => sub { return {}; }
+    isa     => 'Tree::Trie',
+    default => sub { return Tree::Trie->new; }
 );
 
 has _event_handlers => (
-    is  => 'ro',
-    isa => HashRef
+    is   => 'ro',
+    lazy => 1,
+    isa  => HashRef
 );
+
+sub _convert_context {
+    my $self    = shift;
+    my $context = shift;
+}
+
+sub _handle {
+    my $self    = shift;
+    my $request = shift;
+
+    my $context = Slick::Context->new( request => $request );
+
+    $context->log_request;
+
+    for ( split //x, $request->{URI} ) {
+        my (%routes) = $self->handlers->lookup_data($_);
+
+        next if ( len( keys %routes ) > 1 );
+
+        return [ '404', [], ['404 Not Found'] ] unless ( len( keys %routes ) );
+
+        my $callback = ( values %routes )[0];
+
+        for ( @{ $self->_event_handlers->{before_dispatch} } ) {
+            if ( !$_->( $self, $context ) ) {
+                goto DONE;
+            }
+        }
+
+        $callback->( $self, $context );
+
+        for ( @{ $self->_event_handlers->{after_dispatch} } ) {
+            if ( !$_->( $self, $context ) ) {
+                goto DONE;
+            }
+        }
+
+        last;
+    }
+
+  DONE:
+    $context->log_response;
+
+    return $self->_convert_context($context);
+}
 
 sub BUILD {
     my $self = shift;
@@ -82,7 +128,7 @@ sub BUILD {
             host            => $self->config->addr,
             port            => $self->config->port,
             timeout         => $self->config->timeout,
-            server_software => "Slick (Perl) v$VERSION"
+            server_software => "Slick (Perl + PSGI) v$VERSION"
         );
     }
 
@@ -122,13 +168,9 @@ sub on {
 
 # Runs the application with the server
 sub run {
-    my $self = shift;
-    return $self->server->run(
-        sub {
-            say "Slick running on http://$self->addr:$self->port";
-            return $self->_psgi(@_);
-        }
-    );
+    my $self   = shift;
+    my $server = shift;
+    return $self->server->run( sub { return $self->_handle(@_); } );
 }
 
 1;
