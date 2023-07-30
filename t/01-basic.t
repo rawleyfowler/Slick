@@ -76,6 +76,20 @@ $slick->get(
     }
 );
 
+$slick->get(
+    '/foo/{bar}',
+    sub {
+        $_[1]->status(201)->body( $_[1]->param->{'bar'} );
+    }
+);
+
+$slick->get(
+    '/foo/query',
+    sub {
+        $_[1]->body( $_[1]->query->{'foo'} );
+    }
+);
+
 ok $slick->handlers->_map->{'/'}->{children}->{'foo'}->{methods}->{post};
 ok $slick->handlers->_map->{'/'}->{children}->{'foo'}->{methods}->{get};
 ok $slick->handlers->_map->{'/'}->{children}->{'foobar'}->{methods}->{get};
@@ -138,5 +152,39 @@ $response = $slick->_dispatch($t);
 
 is $response->[0],      '509';
 is $response->[2]->[0], '';
+
+$t = {
+    QUERY_STRING    => "",
+    REMOTE_ADDR     => "127.0.0.1",
+    REMOTE_PORT     => 46604,
+    REQUEST_METHOD  => "GET",
+    REQUEST_URI     => "/foo/boop",
+    SCRIPT_NAME     => "",
+    SERVER_NAME     => "127.0.0.1",
+    SERVER_PORT     => 8000,
+    SERVER_PROTOCOL => "HTTP/1.1"
+};
+
+$response = $slick->_dispatch($t);
+
+is $response->[0],      '201';
+is $response->[2]->[0], 'boop';
+
+$t = {
+    QUERY_STRING    => "foo=bar",
+    REMOTE_ADDR     => "127.0.0.1",
+    REMOTE_PORT     => 46604,
+    REQUEST_METHOD  => "GET",
+    REQUEST_URI     => "/foo/query",
+    SCRIPT_NAME     => "",
+    SERVER_NAME     => "127.0.0.1",
+    SERVER_PORT     => 8000,
+    SERVER_PROTOCOL => "HTTP/1.1"
+};
+
+$response = $slick->_dispatch($t);
+
+is $response->[0],      '200';
+is $response->[2]->[0], 'bar';
 
 done_testing;

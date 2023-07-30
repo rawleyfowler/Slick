@@ -80,18 +80,24 @@ sub get {
     for (@parts) {
         if ( exists $m->{children}->{$_} ) {
             $m = $m->{children}->{$_};
+            next;
         }
-        elsif ( first { /^\{([\w_]+)\}$/x } @{ keys %{ $m->{children} } } ) {
-            my $param = $1;
-            $params->{$param} = $_;
-            $m = $m->{children}->{ '{' . $param . '}' };
+
+        my $param;
+        my $part = $_;
+        for ( keys %{ $m->{children} } ) {
+            ($param) = /^\{([\w_]+)\}$/x;
+            $param // next;
+            $params->{$param} = $part;
+            $m = $m->{children}->{"{$param}"};
+            last;
         }
-        else {
-            return undef;
-        }
+
+        return undef unless defined $param;
     }
 
-    $context->{params} = $params;
+    $context->{param} = $params;
+
     return $m->{methods}->{$method};
 }
 

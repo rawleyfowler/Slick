@@ -14,7 +14,7 @@ has _event_handlers => (
     isa     => HashRef,
     default => sub {
         my $r;
-        @$r{ @{ EVENTS() } } = map { [] } @{ EVENTS() };
+        @$r{ @{ EVENTS() } } = map { [] } EVENTS->@*;
         return $r;
     }
 );
@@ -27,7 +27,7 @@ sub on {
       unless ( ref($code) eq 'CODE' );
 
     croak qq{Invalid event '$event', I only know of ( }
-      . ( reduce { $a . ', ' . $b } @{ EVENTS() } ) . ' )'
+      . ( reduce { $a . ', ' . $b } EVENTS->@* ) . ' )'
       unless exists $self->_event_handlers->{$event};
 
     push @{ $self->_event_handlers->{$event} }, $code;

@@ -34,7 +34,7 @@ foreach my $meth ( @{ METHODS() } ) {
             );
 
             if ($events) {
-                foreach my $event ( @{ EVENTS() } ) {
+                foreach my $event ( EVENTS->@* ) {
                     $route_object->on( $event, $_ )
                       for ( @{ $events->{$event} } );
                 }
@@ -163,7 +163,7 @@ sub BUILD {
         );
     }
 
-    $self->{_event_handlers} = { map { $_ => [] } @{ EVENTS() } };
+    $self->{_event_handlers} = { map { $_ => [] } EVENTS->@* };
 
     return $self;
 }
