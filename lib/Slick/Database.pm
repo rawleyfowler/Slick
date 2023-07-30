@@ -23,13 +23,20 @@ has type => (
 sub BUILD {
     my $self = shift;
 
-    require_module 'URI';
+    require_module('URI');
 
     my $uri = URI->new( $self->conn );
 
     if ( $uri->scheme =~ /^postgres(?:ql)?$/x ) {
+        require_module('Slick::DatabaseExecutor::Pg');
         $self->{type} = 'Pg';
         $self->{dbh}  = Slick::DatabaseExecutor::Pg->new( connection => $uri );
+    }
+    elsif ( $uri->scheme =~ /^mysql$/x ) {
+        require_module('Slick::DatabaseExecutor::MySQL');
+        $self->{type} = 'mysql';
+        $self->{dbh} =
+          Slick::DatabaseExecutor::MySQL->new( connection => $uri );
     }
     else {
         croak qq{Unknown scheme or un-supported database: } . $uri->scheme;

@@ -6,19 +6,23 @@ use Moo;
 use Types::Standard qw(HashRef ArrayRef Int Str);
 use Module::Runtime qw(require_module);
 use Carp            qw(croak);
-use Tree::Trie;
-use Try::Tiny;
+use Log::Log4perl   qw(:easy);
+use URI::Query;
 use Slick::Context;
 use Slick::Events qw(EVENTS BEFORE_DISPATCH AFTER_DISPATCH);
-use DDP;
+use Slick::Database;
+use Slick::Methods qw(METHODS);
+use Slick::Route;
+use Slick::RouteMap;
+use Slick::Util;
 
 our $VERSION = '0.001';
 
-extends 'Slick::EventHandler';
+with 'Slick::EventHandler';
 
-foreach my $meth (qw(get post put patch delete)) {
-    require_module('Slick::Util');
-    require_module('Slick::Route');
+Log::Log4perl->easy_init($ERROR);
+
+foreach my $meth ( @{ METHODS() } ) {
     Slick::Util::monkey_patch(
         __PACKAGE__,
         $meth => sub {
@@ -36,7 +40,7 @@ foreach my $meth (qw(get post put patch delete)) {
                 }
             }
 
-            $self->handlers->add_data( "$meth:$route" => $route_object );
+            $self->handlers->add( $route_object, $meth );
 
             return $route_object;
         }
@@ -87,22 +91,31 @@ has dbs => (
 
 has handlers => (
     is      => 'rw',
-    default => sub { return Tree::Trie->new; }
+    default => sub { return Slick::RouteMap->new; }
+);
+
+has banner => (
+    is      => 'rw',
+    default => sub {
+        return <<'EOB';
+a'!   _,,_  a'!  _,,_      a'!   _,,_
+  \\_/    \   \\_/    \      \\_/    \.-,
+   \, /-( /'-, \, /-( /'-,    \, /-( /
+    //\ //\\    //\ //\\       //\ //\\
+EOB
+    }
 );
 
 sub _dispatch {
     my $self    = shift;
     my $request = shift;
 
-    my $context = Slick::Context->new( request => $request );
+    my $context = Slick::Context->new(
+        request => $request,
+        query   => { URI::Query->new( $request->{QUERY_STRING} )->hash }
+    );
 
-    # TODO: Logging
-    # $self->logger->log_request($context);
-
-    p $context;
-    p $self;
-    p $context->indexable_uri;
-    p $self->handlers;
+    $context->log->trace( 'Received request: ' . $context->fmt );
 
     for ( @{ $self->_event_handlers->{ BEFORE_DISPATCH() } } ) {
         if ( !$_->( $self, $context ) ) {
@@ -110,38 +123,33 @@ sub _dispatch {
         }
     }
 
-    for ( split //, $context->indexable_uri ) {
-        my (%routes) = $self->handlers->lookup_data($_);
+    my $route = $self->handlers->get( $context->request->{REQUEST_URI},
+        lc( $context->request->{REQUEST_METHOD} ), $context );
 
-        p %routes;
-
-        return [ '404', [], ['404 Not Found'] ]
-          unless ( scalar( keys %routes ) );
-
-        my $route = ( values %routes )[0];
-
-        p $_;
-
-        $route->dispatch( $self, $context );
-
-        last;
+    unless ( defined $route ) {
+        $context->status(405);
+        $context->body('405 Method Not Supported');
+        goto DONE;
     }
+
+    $route->dispatch( $self, $context );
 
     $_->( $self, $context )
       for ( @{ $self->_event_handlers->{ AFTER_DISPATCH() } } );
 
   DONE:
 
+    # HEAD requests only want headers.
     $context->body = [] if $context->request->{REQUEST_METHOD} eq 'HEAD';
 
-    # TODO: Logging
-    # $context->log_response;
+    $context->log->trace( 'Responding with: ' . $context->fmt_response );
 
     return $context->to_psgi;
 }
 
 sub BUILD {
     my $self = shift;
+
     require_module 'HTTP::Server::PSGI';
 
     if ( $self->env eq 'dev'
@@ -179,6 +187,12 @@ sub database {
 sub run {
     my $self   = shift;
     my $server = shift;
+
+    say "\n" . $self->banner . "\n";
+
+    my ( $addr, $port ) = ( $self->addr, $self->port );
+    say "Slick is listening on: http://$addr:$port\n";
+
     return $self->server->run( sub { return $self->_dispatch(@_); } );
 }
 

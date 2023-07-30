@@ -1,10 +1,9 @@
-package Slick::DatabaseExecutor::Pg;
+package Slick::DatabaseExecutor::MySQL;
 
 use 5.036;
 
 use Moo;
 use Carp qw(croak);
-use DBI;
 
 with 'Slick::DatabaseExecutor';
 
@@ -13,7 +12,7 @@ sub BUILD {
 
     my $db = split /\//x, $self->{connection}->path;
 
-    my $dsn = defined $db ? "dbi:Pg:dbname=$db" : "dbi:Pg";
+    my $dsn = defined $db ? "dbi:mysql:dbname=$db" : "dbi:Pg";
     if ( my $host = $self->{connection}->host ) { $dsn .= ";host=$host"; }
     if ( my $port = $self->{connection}->port ) { $dsn .= ";port=$port"; }
 

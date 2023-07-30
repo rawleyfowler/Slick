@@ -4,7 +4,7 @@ use Moo;
 use Types::Standard qw(CodeRef HashRef Str);
 use Slick::Events   qw(EVENTS BEFORE_DISPATCH AFTER_DISPATCH);
 
-extends 'Slick::EventHandler';
+with 'Slick::EventHandler';
 
 has route => (
     is       => 'ro',
@@ -19,8 +19,7 @@ has callback => (
 );
 
 sub dispatch {
-    my $self = shift;
-    my @args = @_;
+    my ( $self, @args ) = @_;
 
     for ( @{ $self->_event_handlers->{ BEFORE_DISPATCH() } } ) {
         if ( !$_->(@args) ) {

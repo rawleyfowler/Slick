@@ -42,8 +42,23 @@ has response => (
 );
 
 has query => (
-    is  => 'ro',
-    isa => HashRef
+    is      => 'ro',
+    isa     => HashRef,
+    default => sub { return {}; }
+);
+
+has param => (
+    is      => 'ro',
+    isa     => HashRef,
+    default => sub { return {}; }
+);
+
+has log => (
+    is      => 'ro',
+    default => sub {
+        require_module('Log::Log4perl');
+        return Log::Log4perl->get_logger('Slick');
+    }
 );
 
 has _initiated_time => (
@@ -62,6 +77,23 @@ sub BUILD {
 sub to_psgi {
     my $response = shift->response;
     return [ $response->{status}, $response->{headers}, $response->{body} ];
+}
+
+sub redirect {
+    my ( $self, $location, $status ) = @_;
+
+    $self->status( $status // 303 );
+    $self->header( Location => $location );
+
+    return $self;
+}
+
+sub header {
+    my ( $self, $key, $value ) = @_;
+
+    $self->response->{headers}->{$key} = $value;
+
+    return $self;
 }
 
 sub status {
@@ -92,7 +124,7 @@ sub body {
     my $self = shift;
     my $body = shift;
 
-    $self->response->body = [$body];
+    $self->response->{body} = [$body];
 
     return $self;
 }
@@ -102,6 +134,31 @@ sub indexable_uri {
     return
       lc( $self->request->{REQUEST_METHOD} ) . ':'
       . $self->request->{REQUEST_URI};
+}
+
+sub fmt {
+    my $self = shift;
+
+    return sprintf(
+        '[%s] [%s] [%s] - %s',
+        $self->request->{REMOTE_ADDR},
+        $self->id,
+        $self->request->{REQUEST_METHOD},
+        $self->request->{REQUEST_URI} . $self->request->{QUERY_STRING}
+    );
+}
+
+sub fmt_response {
+    my $self = shift;
+
+    return sprintf(
+        '[%s] [%s] [%s] - %s - %s',
+        $self->request->{REMOTE_ADDR},
+        $self->id,
+        $self->request->{REQUEST_METHOD},
+        $self->request->{REQUEST_URI} . $self->request->{QUERY_STRING},
+        $self->response->{status}
+    );
 }
 
 1;

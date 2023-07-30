@@ -2,7 +2,7 @@ package Slick::EventHandler;
 
 use 5.036;
 
-use Moo;
+use Moo::Role;
 use Types::Standard qw(HashRef);
 use Carp            qw(croak);
 use Slick::Events   qw(EVENTS);
