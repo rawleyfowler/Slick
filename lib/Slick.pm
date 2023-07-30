@@ -174,7 +174,7 @@ sub BUILD {
 #
 # $slick->database(foo => 'postgresql://foo@bar:5432/mydb'); # Attempts to create a database labeled foo
 sub database {
-    my ( $self, $name, $conn ) = @_;
+    my ( $self, $name, $conn, %args ) = @_;
 
     if ( defined $conn ) {
         return $self->dbs->{$name} = Slick::Database->new( conn => $conn );

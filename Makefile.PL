@@ -33,7 +33,8 @@ WriteMakefile(
         'DBI'             => '1.643',
         'JSON::Tiny'      => '0.58',
         'URI::Query'      => '0.16',
-        'Log::Log4perl'   => '1.57'
+        'Log::Log4perl'   => '1.57',
+        'Try::Tiny'       => '0'
     },
     text => { TESTS => 't/*.t t/*/*.t it/*.t it/*/*.t' }
 );

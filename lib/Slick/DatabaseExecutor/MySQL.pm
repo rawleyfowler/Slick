@@ -19,12 +19,8 @@ sub BUILD {
     my ( $username, $password ) =
       split /\:/x, [ split /\@/x, $self->{connection}->authority ]->[0];
 
-    $self->{dbi} = DBI->connect(
-        $dsn,
-        $username // '',
-        $password // '',
-        { AutoCommit => 1 }
-    );
+    $self->{dbi} = DBI->connect( $dsn, $username // '', $password // '',
+        $self->dbi_options );
 
     croak qq{Couldn't connect to database: } . $self->{connection}
       unless $self->dbi->ping;
