@@ -16,8 +16,6 @@ is $slick->addr,    '127.0.0.1';
 is $slick->port,    8000;
 is $slick->timeout, 120;
 is $slick->env,     'dev';
-ok $slick->server;
-isa_ok $slick->server, 'HTTP::Server::PSGI';
 ok $slick->dbs;
 isa_ok $slick->dbs, 'HASH';
 ok $slick->banner;
@@ -89,6 +87,10 @@ $slick->get(
         $_[1]->body( $_[1]->query->{'foo'} );
     }
 );
+
+$slick->get( '/redirect', sub { $_[1]->body( $_[1]->redirect('/bob') ) } );
+$slick->get( '/redirect_other',
+    sub { $_[1]->body( $_[1]->redirect( '/bob', 301 ) ) } );
 
 ok $slick->handlers->_map->{'/'}->{children}->{'foo'}->{methods}->{post};
 ok $slick->handlers->_map->{'/'}->{children}->{'foo'}->{methods}->{get};
@@ -186,5 +188,43 @@ $response = $slick->_dispatch($t);
 
 is $response->[0],      '200';
 is $response->[2]->[0], 'bar';
+
+$t = {
+    QUERY_STRING    => '',
+    REMOTE_ADDR     => "127.0.0.1",
+    REMOTE_PORT     => 46604,
+    REQUEST_METHOD  => "GET",
+    REQUEST_URI     => "/redirect",
+    SCRIPT_NAME     => "",
+    SERVER_NAME     => "127.0.0.1",
+    SERVER_PORT     => 8000,
+    SERVER_PROTOCOL => "HTTP/1.1"
+};
+
+$response = $slick->_dispatch($t);
+
+is $response->[0], '303';
+my %h = $response->[1]->@*;
+ok $h{Location};
+is $h{Location}, '/bob';
+
+$t = {
+    QUERY_STRING    => '',
+    REMOTE_ADDR     => "127.0.0.1",
+    REMOTE_PORT     => 46604,
+    REQUEST_METHOD  => "GET",
+    REQUEST_URI     => "/redirect_other",
+    SCRIPT_NAME     => "",
+    SERVER_NAME     => "127.0.0.1",
+    SERVER_PORT     => 8000,
+    SERVER_PROTOCOL => "HTTP/1.1"
+};
+
+$response = $slick->_dispatch($t);
+
+is $response->[0], '301';
+%h = $response->[1]->@*;
+ok $h{Location};
+is $h{Location}, '/bob';
 
 done_testing;

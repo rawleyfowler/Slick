@@ -150,19 +150,6 @@ sub _dispatch {
 sub BUILD {
     my $self = shift;
 
-    require_module 'HTTP::Server::PSGI';
-
-    if ( $self->env eq 'dev'
-        || ( $self->env ne 'dev' && !$self->server ) )
-    {
-        $self->{server} = HTTP::Server::PSGI->new(
-            host            => $self->addr,
-            port            => $self->port,
-            timeout         => $self->timeout,
-            server_software => "Slick (Perl + PSGI) v$VERSION"
-        );
-    }
-
     $self->{_event_handlers} = { map { $_ => [] } EVENTS->@* };
 
     return $self;
@@ -174,7 +161,7 @@ sub BUILD {
 #
 # $slick->database(foo => 'postgresql://foo@bar:5432/mydb'); # Attempts to create a database labeled foo
 sub database {
-    my ( $self, $name, $conn, %args ) = @_;
+    my ( $self, $name, $conn ) = @_;
 
     if ( defined $conn ) {
         return $self->dbs->{$name} = Slick::Database->new( conn => $conn );
@@ -185,15 +172,37 @@ sub database {
 
 # Runs the application with the server
 sub run {
-    my $self   = shift;
-    my $server = shift;
+    my ( $self, %args ) = @_;
+
+    my $server = $args{server} // 'HTTP::Server::PSGI';
+    $self->{port} = $args{port} // 8000;
+    $self->{addr} = $args{addr} // '127.0.0.1';
+
+    require_module $server;
+
+    if ( $self->env eq 'dev'
+        || ( $self->env ne 'dev' && !$self->server ) )
+    {
+        $self->{server} = $server->new(
+            host            => $self->addr,
+            port            => $self->port,
+            timeout         => $self->timeout,
+            server_software => "Slick (Perl + PSGI) v$VERSION"
+        );
+    }
 
     say "\n" . $self->banner . "\n";
 
     my ( $addr, $port ) = ( $self->addr, $self->port );
     say "Slick is listening on: http://$addr:$port\n";
 
-    return $self->server->run( sub { return $self->_dispatch(@_); } );
+    return $self->server->run( $self->app );
+}
+
+# This is for users who want to use plackup
+sub app {
+    my $self = shift;
+    return sub { return $self->_dispatch(@_); };
 }
 
 1;

@@ -91,7 +91,9 @@ sub redirect {
 sub header {
     my ( $self, $key, $value ) = @_;
 
-    $self->response->{headers}->{$key} = $value;
+    my %headers = @{ $self->response->{headers} };
+    $headers{$key} = $value;
+    $self->response->{headers} = [%headers];
 
     return $self;
 }
@@ -111,11 +113,18 @@ sub json {
 
     require_module('JSON::Tiny');
 
-    my %headers = @{ $self->response->{headers} };
-    $headers{'Content-Type'} = 'application/json; encoding=utf8';
-    $self->response->{headers} = [%headers];
+    $self->header( 'Content-Type', 'application/json; encoding=utf8' );
+    $self->body( encode_json $body);
 
-    $self->response->{body} = [ encode_json($body) ];
+    return $self;
+}
+
+sub text {
+    my $self = shift;
+    my $body = shift;
+
+    $self->body($body);
+    $self->header( 'Content-Type', 'text/plain' );
 
     return $self;
 }
@@ -144,7 +153,12 @@ sub fmt {
         $self->request->{REMOTE_ADDR},
         $self->id,
         $self->request->{REQUEST_METHOD},
-        $self->request->{REQUEST_URI} . $self->request->{QUERY_STRING}
+        $self->request->{REQUEST_URI}
+          . (
+            $self->request->{QUERY_STRING}
+            ? '?' . $self->request->{QUERY_STRING}
+            : ''
+          )
     );
 }
 
@@ -156,7 +170,12 @@ sub fmt_response {
         $self->request->{REMOTE_ADDR},
         $self->id,
         $self->request->{REQUEST_METHOD},
-        $self->request->{REQUEST_URI} . $self->request->{QUERY_STRING},
+        $self->request->{REQUEST_URI}
+          . (
+            $self->request->{QUERY_STRING}
+            ? '?' . $self->request->{QUERY_STRING}
+            : ''
+          ),
         $self->response->{status}
     );
 }

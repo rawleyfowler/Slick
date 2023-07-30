@@ -9,7 +9,7 @@ sub four_digit_number {
     my @chars = ( 1 .. 9 );
 
     my $n = '';
-    for ( 1 .. ( scalar @chars ) ) {
+    for ( 1 .. 4 ) {
         $n .= $chars[ int rand @chars ];
     }
 
