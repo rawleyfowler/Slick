@@ -1,11 +1,15 @@
 package Slick::Context;
 
+use 5.036;
+
 use Moo;
 use Slick::Util;
 use Types::Standard qw(Str HashRef);
 use Module::Runtime qw(require_module);
 use URI::Query;
-use JSON::Tiny qw(encode_json);
+use URL::Encode;
+use JSON::Tiny qw(encode_json decode_json);
+use YAML::Tiny;
 
 # STATIC
 sub REDIRECT { return 'R'; }
@@ -25,7 +29,6 @@ has stash => (
 
 has request => (
     is       => 'ro',
-    isa      => HashRef,
     required => 1
 );
 
@@ -53,23 +56,51 @@ has param => (
     default => sub { return {}; }
 );
 
-has log => (
-    is      => 'ro',
-    default => sub {
-        require_module('Log::Log4perl');
-        return Log::Log4perl->get_logger('Slick');
-    }
-);
-
 has _initiated_time => (
     is      => 'ro',
     default => sub { require_module('Time::HiRes'); return time; }
 );
 
+sub _decode_content {
+    my $self = shift;
+
+    state $known_types = {
+        'application/json'                => sub { return decode_json(shift); },
+        'text/json'                       => sub { return decode_json(shift); },
+        'application/json; encoding=utf8' => sub { return decode_json(shift); },
+        'application/yaml'   => sub { return YAML::Tiny->read_string(shift); },
+        'text/yaml'          => sub { return YAML::Tiny->read_string(shift); },
+        'application/x-yaml' => sub { return YAML::Tiny->read_string(shift); },
+        'application/x-www-form-urlencoded' =>
+          sub { return url_decode_utf8(shift); }
+    };
+
+    return $known_types->{ $self->request->content_type }
+      ->( $self->request->content )
+      if exists $known_types->{ $self->request->content_type };
+
+    if ( rindex( $self->request->content_type, 'application/json', 0 ) == 0 ) {
+        return decode_json( $self->request->content );
+    }
+    elsif (
+        rindex( $self->request->content_type,
+            'application/x-www-form-urlencoded' ) == 0
+      )
+    {
+        return url_decode_utf8( $self->request->content );
+    }
+    elsif (rindex( $self->request->content_type, 'application/yaml', 0 ) == 0
+        || rindex( $self->request->content_type, 'application/x-yaml', 0 ) ==
+        0 )
+    {
+        return YAML::Tiny->read_string( $self->request->content );
+    }
+}
+
 sub BUILD {
     my $self = shift;
 
-    $self->{query} = URI::Query->new( $self->request->{QUERY_STRING} )->hash;
+    $self->{query} = URI::Query->new( $self->request->query_string )->hash;
 
     return $self;
 }
@@ -138,46 +169,12 @@ sub body {
     return $self;
 }
 
-sub indexable_uri {
-    my $self = shift;
-    return
-      lc( $self->request->{REQUEST_METHOD} ) . ':'
-      . $self->request->{REQUEST_URI};
-}
-
-sub fmt {
+sub content {
     my $self = shift;
 
-    return sprintf(
-        '[%s] [%s] [%s] - %s',
-        $self->request->{REMOTE_ADDR},
-        $self->id,
-        $self->request->{REQUEST_METHOD},
-        $self->request->{REQUEST_URI}
-          . (
-            $self->request->{QUERY_STRING}
-            ? '?' . $self->request->{QUERY_STRING}
-            : ''
-          )
-    );
-}
+    state $val = $self->_decode_content;
 
-sub fmt_response {
-    my $self = shift;
-
-    return sprintf(
-        '[%s] [%s] [%s] - %s - %s',
-        $self->request->{REMOTE_ADDR},
-        $self->id,
-        $self->request->{REQUEST_METHOD},
-        $self->request->{REQUEST_URI}
-          . (
-            $self->request->{QUERY_STRING}
-            ? '?' . $self->request->{QUERY_STRING}
-            : ''
-          ),
-        $self->response->{status}
-    );
+    return $val;
 }
 
 1;

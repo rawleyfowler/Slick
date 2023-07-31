@@ -6,8 +6,8 @@ use Moo;
 use Types::Standard qw(HashRef ArrayRef Int Str);
 use Module::Runtime qw(require_module);
 use Carp            qw(croak);
-use Log::Log4perl   qw(:easy);
 use URI::Query;
+use Plack::Builder qw(builder enable);
 use Slick::Context;
 use Slick::Events qw(EVENTS BEFORE_DISPATCH AFTER_DISPATCH);
 use Slick::Database;
@@ -19,8 +19,6 @@ use Slick::Util;
 our $VERSION = '0.001';
 
 with 'Slick::EventHandler';
-
-Log::Log4perl->easy_init($ERROR);
 
 foreach my $meth ( @{ METHODS() } ) {
     Slick::Util::monkey_patch(
@@ -107,15 +105,14 @@ EOB
 );
 
 sub _dispatch {
+    require_module 'Plack::Request';
+
     my $self    = shift;
-    my $request = shift;
+    my $request = Plack::Request->new(shift);
 
-    my $context = Slick::Context->new(
-        request => $request,
-        query   => { URI::Query->new( $request->{QUERY_STRING} )->hash }
-    );
+    my $context = Slick::Context->new( request => $request, );
 
-    $context->log->trace( 'Received request: ' . $context->fmt );
+    my $method = lc( $request->method );
 
     for ( @{ $self->_event_handlers->{ BEFORE_DISPATCH() } } ) {
         if ( !$_->( $self, $context ) ) {
@@ -123,16 +120,16 @@ sub _dispatch {
         }
     }
 
-    my $route = $self->handlers->get( $context->request->{REQUEST_URI},
-        lc( $context->request->{REQUEST_METHOD} ), $context );
-
-    unless ( defined $route ) {
+    my $route =
+      $self->handlers->get( $context->request->request_uri, $method, $context );
+    if ( defined $route ) {
+        $route->dispatch( $self, $context );
+    }
+    else {
         $context->status(405);
         $context->body('405 Method Not Supported');
         goto DONE;
     }
-
-    $route->dispatch( $self, $context );
 
     $_->( $self, $context )
       for ( @{ $self->_event_handlers->{ AFTER_DISPATCH() } } );
@@ -140,9 +137,7 @@ sub _dispatch {
   DONE:
 
     # HEAD requests only want headers.
-    $context->body = [] if $context->request->{REQUEST_METHOD} eq 'HEAD';
-
-    $context->log->trace( 'Responding with: ' . $context->fmt_response );
+    $context->body = [] if $method eq 'head';
 
     return $context->to_psgi;
 }
@@ -202,7 +197,11 @@ sub run {
 # This is for users who want to use plackup
 sub app {
     my $self = shift;
-    return sub { return $self->_dispatch(@_); };
+
+    return builder {
+        enable 'Plack::Middleware::AccessLog' => format => 'combined';
+        sub { return $self->_dispatch(@_); }
+    };
 }
 
 1;

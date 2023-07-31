@@ -9,5 +9,6 @@ requires 'SQL::Abstract', '2.000001';
 requires 'DBI', '1.643';
 requires 'JSON::Tiny', '0.58';
 requires 'URI::Query', '0.16';
-requires 'Log::Log4perl', '1.57';
 requires 'Try::Tiny', '0';
+requires 'YAML::Tiny', '1.74';
+requires 'URL::Encode', '0.03';
