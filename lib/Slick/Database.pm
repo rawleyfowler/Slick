@@ -194,3 +194,114 @@ sub migration {
 
 1;
 
+=encoding utf8
+
+=head1 NAME
+
+Slick::Database
+
+=head1 SYNOPSIS
+
+An OO wrapper around L<DBI> and L<SQL::Abstract>.
+
+Currently L<Slick::Database> supports C<MySQL> and C<PostgreSQL>. Note, you will need to install the
+driver that you'd like to use manually, as L<Slick> does not come bundled with any.
+
+See C<Slick::DatabaseExecutor> for lower level information on how L<Slick::Database> works.
+
+=head1 API
+
+=head2 dbi
+
+Returns the underlying L<DBI> driver object associated with the database.
+
+=head2 execute
+
+Runs some statement against the underlying L<DBI> driver object associated with the database.
+
+=head2 select, select_one, update, delete, insert
+
+    my $users = $s->database('my_postgres')
+                ->select('users', [ 'id', 'name' ]); # SELECT id, name FROM users;
+
+    my $user = $s->database('my_postgres')
+                ->select_one('users', [ 'id', 'name', 'age' ], { id => 1 }); # SELECT id, name, age FROM users WHERE id = 1;
+
+    $s->database('my_postgres')
+      ->insert('users', { name => 'Bob', age => 23 }); # INSERT INTO users (name, age) VALUES ('Bob', 23);
+
+    $s->database('my_postgres')
+      ->update('users', { name => 'John' }, { id => 2 }); # UPDATE users SET name = 'John' WHERE id = 2;
+
+    $s->database('my_postgres')
+      ->delete('users', { id => 2 }); # DELETE FROM users WHERE id = 2;
+
+Wrapper around L<SQL::Abstract>, see L<SQL::Abstract> for more information on how to use these methods.
+
+See L<"dbi"> if you would like to directly use the L<DBI> connection instead of L<SQL::Abstract>.
+
+=head2 migrations
+
+    $s->database('db')->migrations;
+
+Returns a C<HashRef> with all of the migrations associated with the database.
+
+=head2 migration
+
+    $s->database('db')->migration(
+        'migration_id', # id
+        'CREATE TABLE foo (id INT PRIMARY KEY);', # up
+        'DROP TABLE foo;' # down
+    );
+
+Create a migration and associate it with the database.
+
+=head2 migrate_up
+
+    $s->database('db')->migrate_up;
+
+Runs all pending migrations against the database.
+
+If you wish to only migrate a single migration, you can provide the id of the migration
+you'd like to run:
+
+    $s->database('db')->migrate_up('migration_id');
+
+=head2 migrate_down
+
+    $s->database('db')->migrate_down;
+
+Migrates all migrations down effectively destroying your database.
+
+If you wish to only de-migrate a single migration, you can provide the id of the migration
+you'd like to run:
+
+    $s->database('db')->migrate_down('migration_id');
+
+=head1 See also
+
+=over2
+
+=item * L<Slick::Context>
+
+=item * L<Slick::Database>
+
+=item * L<Slick::DatabaseExecutor>
+
+=item * L<Slick::DatabaseExecutor::MySQL>
+
+=item * L<Slick::DatabaseExecutor::Pg>
+
+=item * L<Slick::EventHandler>
+
+=item * L<Slick::Events>
+
+=item * L<Slick::Methods>
+
+=item * L<Slick::RouteMap>
+
+=item * L<Slick::Util>
+
+=back
+
+=cut

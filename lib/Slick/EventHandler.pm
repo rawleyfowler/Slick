@@ -35,3 +35,46 @@ sub on {
 }
 
 1;
+
+=encoding utf8
+
+=head1 NAME
+
+Slick::EventHandler
+
+=head1 SYNOPSIS
+
+A L<Moo::Role> that allows the registering of events via a C<on> method.
+
+=head1 API
+
+=head2 on
+
+Registers a C<CodeRef> with a given event name. Only allows registering of events
+that exist within L<Slick::Events>.
+
+=over2
+
+=item * L<Slick::Context>
+
+=item * L<Slick::Database>
+
+=item * L<Slick::DatabaseExecutor>
+
+=item * L<Slick::DatabaseExecutor::MySQL>
+
+=item * L<Slick::DatabaseExecutor::Pg>
+
+=item * L<Slick::EventHandler>
+
+=item * L<Slick::Events>
+
+=item * L<Slick::Methods>
+
+=item * L<Slick::RouteMap>
+
+=item * L<Slick::Util>
+
+=back
+
+=cut

@@ -102,3 +102,55 @@ sub get {
 }
 
 1;
+
+=encoding utf8
+
+=head1 NAME
+
+Slick::RouteMap
+
+=head1 SYNOPSIS
+
+L<Slick::RouteMap> is a simple "Hash-Trie" that resolves routes extremely fast, at the cost of using slightly more
+memory than other routing schemes.
+
+=head1 API
+
+=head2 get
+
+Given a uri (Str), method (Str), and L<Slick::Context>, find the associated L<Slick::Route>, and return it.
+Otherwise return C<undef>.
+
+=head2 add
+
+Given a L<Slick::Route> and a uri (Str), add it to the Hash-Trie for later lookup.
+
+=head1 See also
+
+=over2
+
+=item * L<Slick>
+
+=item * L<Slick::Context>
+
+=item * L<Slick::Database>
+
+=item * L<Slick::DatabaseExecutor>
+
+=item * L<Slick::DatabaseExecutor::MySQL>
+
+=item * L<Slick::DatabaseExecutor::Pg>
+
+=item * L<Slick::EventHandler>
+
+=item * L<Slick::Events>
+
+=item * L<Slick::Methods>
+
+=item * L<Slick::RouteMap>
+
+=item * L<Slick::Util>
+
+=back
+
+=cut

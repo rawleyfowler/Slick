@@ -487,8 +487,6 @@ Inherited from L<Slick::EventHandler>.
 
 =item * L<Slick::Events>
 
-=item * L<Slick::Handler>
-
 =item * L<Slick::Methods>
 
 =item * L<Slick::RouteMap>

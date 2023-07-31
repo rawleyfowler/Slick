@@ -408,8 +408,6 @@ Returns an arbitrary tracing ID in the form of a 4-digit number.
 
 =item * L<Slick::Events>
 
-=item * L<Slick::Handler>
-
 =item * L<Slick::Methods>
 
 =item * L<Slick::RouteMap>

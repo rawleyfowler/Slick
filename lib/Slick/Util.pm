@@ -29,3 +29,51 @@ sub monkey_patch {
 }
 
 1;
+
+=encoding utf8
+
+=head1 NAME
+
+Slick::EventHandler
+
+=head1 SYNOPSIS
+
+A utility module that provides a few small useful tid-bits.
+
+=head1 API
+
+=head2 four_digit_number
+
+A method that returns a four-digit number.
+
+=head2 monkey_patch
+
+Patches a sub-routine onto a package as a method.
+
+=over2
+
+=item * L<Slick>
+
+=item * L<Slick::Context>
+
+=item * L<Slick::Database>
+
+=item * L<Slick::DatabaseExecutor>
+
+=item * L<Slick::DatabaseExecutor::MySQL>
+
+=item * L<Slick::DatabaseExecutor::Pg>
+
+=item * L<Slick::EventHandler>
+
+=item * L<Slick::Events>
+
+=item * L<Slick::Methods>
+
+=item * L<Slick::RouteMap>
+
+=item * L<Slick::Util>
+
+=back
+
+=cut
