@@ -60,16 +60,16 @@ $s->run; # Run the application.
 
 ### Running with Rackup
 
-If you wish to use `rackup` you can change the final call to `run` to a call to `app`
+If you wish to use `plackup` you can change the final call to `run` to a call to `app`
 
 ```perl
 $s->app;
 ```
 
-Then simply run with rackup (substitue `my_app.psgi` with whatever your app is called):
+Then simply run with plackup (substitue `my_app.psgi` with whatever your app is called):
 
 ```bash
-rackup -a my_app.psgi
+plackup -a my_app.psgi
 ```
 
 ### Changing PSGI backend

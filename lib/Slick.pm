@@ -305,15 +305,15 @@ has a migration, and also serves some JSON.
 
     $s->run; # Run the application.
 
-=head3 Running with rackup
+=head3 Running with plackup
 
-If you wish to use C<rackup> you can change the final call to C<run> to a call to C<app>:
+If you wish to use C<plackup> you can change the final call to C<run> to a call to C<app>:
 
     $s->app;
 
-Then simply run with rackup (substitue `my_app.psgi` with whatever your app is called):
+Then simply run with plackup (substitue `my_app.psgi` with whatever your app is called):
 
-    rackup -a my_app.psgi
+    plackup -a my_app.psgi
 
 =head3 Changing PSGI backend
 
