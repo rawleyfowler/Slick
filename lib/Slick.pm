@@ -17,7 +17,7 @@ use Slick::Route;
 use Slick::RouteMap;
 use Slick::Util;
 
-our $VERSION = '0.001';
+our $VERSION = '0.002';
 
 with 'Slick::EventHandler';
 

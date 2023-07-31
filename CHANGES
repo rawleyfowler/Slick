@@ -1,4 +1,8 @@
-0.01  2023-07-31
+0.002  2023-07-31
+  - Alpha release #2
+  - Includes fixes to documentation
+
+0.001  2023-07-31
   - Alpha release #1
   - Includes migrations, helpers, routing (routers and direct), and database management
   - Supports PostgreSQL and MySQL
