@@ -307,7 +307,7 @@ has a migration, and also serves some JSON.
 
 =head3 Running with rackup
 
-If you wish to use `rackup` you can change the final call to `run` to a call to `app`
+If you wish to use C<rackup> you can change the final call to C<run> to a call to C<app>:
 
     $s->app;
 
@@ -317,13 +317,13 @@ Then simply run with rackup (substitue `my_app.psgi` with whatever your app is c
 
 =head3 Changing PSGI backend
 
-Will run on the default [`HTTP::Server::PSGI`](https://metacpan.org/pod/HTTP::Server::PSGI).
+Will run on the default L<HTTP::Server::PSGI>.
 
     $s->run;
 
 Or,
 
-In this example, running Slick with a [`Gazelle`](https://metacpan.org/pod/Gazelle) backend on port `8888` and address `0.0.0.0`.
+In this example, running Slick with a L<Gazelle> backend on port C<8888> and address C<0.0.0.0>.
 
     $s->run(server => 'Gazelle', port => 8888, addr => '0.0.0.0'); 
 
