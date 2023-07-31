@@ -92,6 +92,12 @@ has handlers => (
     default => sub { return Slick::RouteMap->new; }
 );
 
+has middlewares => (
+    is      => 'ro',
+    isa     => ArrayRef,
+    default => sub { return []; }
+);
+
 has banner => (
     is      => 'rw',
     default => sub {
@@ -150,6 +156,14 @@ sub BUILD {
     return $self;
 }
 
+sub middleware {
+    my ( $self, @args ) = @_;
+
+    push $self->middlewares->@*, [@args];
+
+    return $self;
+}
+
 # Add a database or access an existing database:
 #
 # $slick->database('foo'); # Get's an existing database labeled 'foo'
@@ -200,6 +214,7 @@ sub app {
 
     return builder {
         enable 'Plack::Middleware::AccessLog' => format => 'combined';
+        enable $_->@* for $self->middlewares->@*;
         sub { return $self->_dispatch(@_); }
     };
 }
