@@ -38,8 +38,8 @@ has response => (
     default => sub {
         return {
             status  => 200,
-            body    => [''],
-            headers => [ 'X-Server' => 'Slick (Perl + PSGI)' ]
+            body    => [],
+            headers => []
         };
     }
 );

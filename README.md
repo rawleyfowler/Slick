@@ -1,14 +1,14 @@
-# Slick
+# [Slick](https://metacpan.org/pod/Slick)
 
-Slick is an Object-Oriented Perl web-framework for building fast, and easy to refactor REST API's. 
+Slick is an Object-Oriented Perl web-framework for building performant, and easy to refactor REST API's. 
 Slick is built on top of [DBI](https://metacpan.org/pod/DBI), [Plack](https://metacpan.org/pod/Plack), 
 and [Moo](https://metacpan.org/pod/Moo) and fits somewhere in-between the realms of Dancer and Mojo.
 
 Slick has everything you need to build a Database driven REST API, including built in support
-for Database connections, Migrations, and route based Caching (WIP). Since Slick is a Plack application,
-you can also take advantage of swappable backends and Plack middlewares fairly simply.
+for Database connections, Migrations, and soon, route based Caching via Redis or Memcached. Since Slick is a Plack application,
+you can also take advantage of swappable backends and Plack middlewares extremely simply.
 
-Currently, Slick supports `MySQL` and `Postgres` but there are plans to implement `Oracle` and `SQL Server`.
+Currently, Slick supports `MySQL` and `Postgres` but there are plans to implement `Oracle` and `MS SQL Server`.
 
 ## Examples
 
@@ -48,7 +48,7 @@ $s->post('/users' => sub {
     my $app = shift;
     my $context = shift;
     
-    my $new_user = $context->body; # Will be decoded from JSON, YAML, or URL encoded
+    my $new_user = $context->content; # Will be decoded from JSON, YAML, or URL encoded (See JSON::Tiny, YAML::Tiny, and URL::Encode)
     
     $app->database('my_db')->insert('user', $new_user);
     
@@ -58,7 +58,7 @@ $s->post('/users' => sub {
 $s->run; # Run the application.
 ```
 
-## Running with Rackup
+### Running with Rackup
 
 If you wish to use `rackup` you can change the final call to `run` to a call to `app`
 
@@ -72,7 +72,7 @@ Then simply run with rackup (substitue `my_app.psgi` with whatever your app is c
 rackup -a my_app.psgi
 ```
 
-## Changing PSGI backend
+### Changing PSGI backend
 
 Will run on the default [`HTTP::Server::PSGI`](https://metacpan.org/pod/HTTP::Server::PSGI).
 ```perl
@@ -86,7 +86,7 @@ In this example, running Slick with a [`Gazelle`](https://metacpan.org/pod/Gazel
 $s->run(server => 'Gazelle', port => 8888, addr => '0.0.0.0'); 
 ```
 
-## Using Plack Middlewares
+### Using Plack Middlewares
 
 You can register more Plack middlewares with your application very easily!
 
@@ -123,6 +123,31 @@ $s->database('my_postgres')
   ->migration('create_pets_table',
   'CREATE TABLE pets ( id INT PRIMARY KEY, name TEXT, owner INT FOREIGN KEY REFERENCES users (id) );',
   'DROP TABLE pets;');
+```
+
+### Queries
+
+Queries in Slick are built with [`SQL::Abstract`](https://metacpan.org/pod/SQL::Abstract), and most of the heavy lifting
+is done for you already!
+
+```perl
+my $users = $s->database('my_postgres')
+              ->select('users', [ 'id', 'name' ]); # SELECT id, name FROM users;
+
+my $user = $s->database('my_postgres')
+             ->select_one('users', [ 'id', 'name', 'age' ], { id => 1 }); # SELECT id, name, age FROM users WHERE id = 1;
+             
+$s->database('my_postgres')
+  ->insert('users', { name => 'Bob', age => 23 }); # INSERT INTO users (name, age) VALUES ('Bob', 23);
+  
+$s->database('my_postgres')
+  ->update('users', { name => 'John' }, { id => 2 }); # UPDATE users SET name = 'John' WHERE id = 2;
+```
+
+If you can't do what you want with `SQL::Abstract` helpers, you can certainly do it with DBI!
+
+```perl
+$s->database('my_postgres')->dbi->execute('DROP TABLE users;');
 ```
 
 ## Deployment
