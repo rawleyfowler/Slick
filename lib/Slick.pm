@@ -249,7 +249,7 @@ Slick is an Object-Oriented Perl web-framework for building performant, and easy
 Slick is built on top of L<DBI>, L<Plack>, and L<Moo> and fits somewhere in-between the realms of L<Dancer> and L<Mojolicious>.
 
 Slick has everything you need to build a Database driven REST API, including built in support
-for Database connections, Migrations, and soon, route based Caching via Redis or Memcached. Since Slick is a Plack application,
+for Database connections, Migrations, Event logic, and soon, route based Caching via Redis or Memcached. Since Slick is a Plack application,
 you can also take advantage of swappable backends and Plack middlewares extremely simply.
 
 Currently, Slick supports MySQL and PostgreSQL but there are plans to implement Oracle and MS SQL Server as well.
@@ -286,7 +286,7 @@ has a migration, and also serves some JSON.
         my $context = shift;
 
         # Queries follow SQL::Abstract's notations
-        my $user = $app->database('my_db')->select_one('user', { id => $context->param('id') });
+        my $user = $app->database('my_db')->select_one('user', { id => $context->params('id') });
 
         # Render the user hashref as JSON.
         $context->json($user);
@@ -403,11 +403,75 @@ You can change this via parameters passed to the C<run> method:
         addr => '0.0.0.0'
     );
 
+=head2 get, post, put, patch, delete
+
+Methods to handle requests to your server. Takes a location, and a C<CodeRef> that expects
+two arguments, app (L<Slick>) and context (L<Slick::Context>).
+
+    $s->get('/foo', sub {
+        my ($app, $context) = @_;
+        # ... do stuff
+    });
+
+You can also have path parameters that are replaced with the values in the URI:
+
+    $s->get('/foo/{bar}', sub {
+        my ($app, $context) = @_;
+        $context->params('bar'); # Resolves to the parameters value.
+        # ... do stuff
+    });
+
+You may also register local events for the route like so:
+
+    $s->get('/foo/{bar}', sub {
+        my ($app, $context) = @_;
+        $context->params('bar'); # Resolves to the parameters value.
+        # ... do stuff
+    },
+    { before_dispatch => [
+         sub {
+             my ($app, $context) = @_;
+             # Do some before dispatch logic
+         }
+    ],
+      after_dispatch => [
+         sub {
+             my ($app, $context) = @_;
+             # Do some after dispatch logic
+             return 1;
+         }
+    ]);
+
+See L<Slick::Events> for a list of all of the events.
+
+See L<Slick::Route> C<on> method for more information about route event handling.
+
+See L<Slick::Context> for more ways to handle routing and HTTP lifecycles.
+
+=head2 on
+
+    $s->on(before_dispatch => sub {
+        my ($app, $context) = @_;
+        # do stuff before routing logic has been handled
+        return 1;
+    });
+
+    $s->on(after_dispatch => sub {
+        my ($app, $context) = @_;
+        # do stuff after routing logic has been handled
+        return 1;
+    });
+
+Registers an event listener globally across the entire application. If a registered event handler
+returns a C<falsy> value, the route chain will stop and the current context will be returned as the response.
+
+See L<Slick::Events> for a list of available events.
+
+Inherited from L<Slick::EventHandler>.
+
 =head1 See also
 
 =over2
-
-=item * L<Slick>
 
 =item * L<Slick::Context>
 

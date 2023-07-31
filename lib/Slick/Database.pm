@@ -3,7 +3,7 @@ package Slick::Database;
 use 5.036;
 
 use Moo;
-use Types::Standard qw(Str HashRef);
+use Types::Standard qw(Str HashRef Int);
 use Module::Runtime qw(require_module);
 use Carp            qw(croak);
 use Try::Tiny;
@@ -34,6 +34,7 @@ has type => (
 
 has auto_migrate => (
     is      => 'rw',
+    isa     => Int,
     default => sub { return 0; }
 );
 
@@ -192,3 +193,4 @@ sub migration {
 }
 
 1;
+

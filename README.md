@@ -34,14 +34,14 @@ $s->database('my_db')->migration(
 $s->database('my_db')->migrate_up; # Migrates all pending migrations
 
 $s->get('/users/{id}' => sub {
-	my $app = shift;
-	my $context = shift;
+    my $app = shift;
+    my $context = shift;
 
-	# Queries follow SQL::Abstract's notations
-	my $user = $app->database('my_db')->select_one('user', { id => $context->param('id') });
+    # Queries follow SQL::Abstract's notations
+    my $user = $app->database('my_db')->select_one('user', { id => $context->param('id') });
 
-	# Render the user hashref as JSON.
-	$context->json($user);
+    # Render the user hashref as JSON.
+    $context->json($user);
 });
 
 $s->post('/users' => sub {

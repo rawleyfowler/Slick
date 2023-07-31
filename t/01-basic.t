@@ -77,14 +77,14 @@ $slick->get(
 $slick->get(
     '/foo/{bar}',
     sub {
-        $_[1]->status(201)->body( $_[1]->param->{'bar'} );
+        $_[1]->status(201)->body( $_[1]->param('bar') );
     }
 );
 
 $slick->get(
     '/foo/query',
     sub {
-        $_[1]->body( $_[1]->query->{'foo'} );
+        $_[1]->body( $_[1]->query('foo') );
     }
 );
 

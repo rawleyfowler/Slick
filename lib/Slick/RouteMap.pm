@@ -96,7 +96,7 @@ sub get {
         return undef unless defined $param;
     }
 
-    $context->{param} = $params;
+    $context->{params} = $params;
 
     return $m->{methods}->{$method};
 }
