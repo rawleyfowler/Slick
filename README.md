@@ -58,7 +58,7 @@ $s->post('/users' => sub {
 $s->run; # Run the application.
 ```
 
-### Running with Rackup
+### Running with `plackup`
 
 If you wish to use `plackup` you can change the final call to `run` to a call to `app`
 
