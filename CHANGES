@@ -1,3 +1,10 @@
+0.003  2023-08-01
+  - Alpha release #3
+  - Add routers allowing for easier use in multi-file projects
+  - Add the RouteManager role
+  - Fix POD
+  - Routes now do not need a preceding '/' to be considered valid
+
 0.002  2023-07-31
   - Alpha release #2
   - Includes fixes to documentation
