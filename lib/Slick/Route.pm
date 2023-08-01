@@ -21,7 +21,7 @@ has callback => (
 sub dispatch {
     my ( $self, @args ) = @_;
 
-    for ( @{ $self->_event_handlers->{ BEFORE_DISPATCH() } } ) {
+    for ( @{ $self->event_handlers->{ BEFORE_DISPATCH() } } ) {
         if ( !$_->(@args) ) {
             goto DONE;
         }
@@ -29,7 +29,7 @@ sub dispatch {
 
     $self->callback->(@args);
 
-    for ( @{ $self->_event_handlers->{ AFTER_DISPATCH() } } ) {
+    for ( @{ $self->event_handlers->{ AFTER_DISPATCH() } } ) {
         if ( !$_->(@args) ) {
             goto DONE;
         }

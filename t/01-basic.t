@@ -20,8 +20,8 @@ ok $slick->dbs;
 isa_ok $slick->dbs, 'HASH';
 ok $slick->banner;
 
-ok $slick->_event_handlers;
-isa_ok $slick->_event_handlers, 'HASH';
+ok $slick->event_handlers;
+isa_ok $slick->event_handlers, 'HASH';
 
 my $t = {
     QUERY_STRING    => "",
@@ -92,6 +92,12 @@ $slick->get( '/redirect', sub { $_[1]->body( $_[1]->redirect('/bob') ) } );
 $slick->get( '/redirect_other',
     sub { $_[1]->body( $_[1]->redirect( '/bob', 301 ) ) } );
 
+my $router = Slick::Router->new( base => '/foo' );
+$router->get( '/bob' => sub { return $_[1]->json( { foo => 'bar' } ); } );
+$slick->register($router);
+
+ok $slick->handlers->_map->{'/'}->{children}->{'foo'}->{children}->{'bob'}
+  ->{methods}->{get};
 ok $slick->handlers->_map->{'/'}->{children}->{'foo'}->{methods}->{post};
 ok $slick->handlers->_map->{'/'}->{children}->{'foo'}->{methods}->{get};
 ok $slick->handlers->_map->{'/'}->{children}->{'foobar'}->{methods}->{get};
@@ -213,7 +219,7 @@ $t = {
     REMOTE_ADDR     => "127.0.0.1",
     REMOTE_PORT     => 46604,
     REQUEST_METHOD  => "GET",
-    REQUEST_URI     => "/redirect_other",
+    REQUEST_URI     => "/foo/bob",
     SCRIPT_NAME     => "",
     SERVER_NAME     => "127.0.0.1",
     SERVER_PORT     => 8000,
@@ -222,9 +228,7 @@ $t = {
 
 $response = $slick->_dispatch($t);
 
-is $response->[0], '301';
-%h = $response->[1]->@*;
-ok $h{Location};
-is $h{Location}, '/bob';
+is $response->[0],      '200';
+is $response->[2]->[0], '{"foo":"bar"}';
 
 done_testing;

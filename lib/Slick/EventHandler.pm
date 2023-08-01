@@ -8,7 +8,7 @@ use Carp            qw(croak);
 use Slick::Events   qw(EVENTS);
 use List::Util      qw(reduce);
 
-has _event_handlers => (
+has event_handlers => (
     is      => 'ro',
     lazy    => 1,
     isa     => HashRef,
@@ -28,9 +28,9 @@ sub on {
 
     croak qq{Invalid event '$event', I only know of ( }
       . ( reduce { $a . ', ' . $b } EVENTS->@* ) . ' )'
-      unless exists $self->_event_handlers->{$event};
+      unless exists $self->event_handlers->{$event};
 
-    push @{ $self->_event_handlers->{$event} }, $code;
+    push @{ $self->event_handlers->{$event} }, $code;
     return $code;
 }
 

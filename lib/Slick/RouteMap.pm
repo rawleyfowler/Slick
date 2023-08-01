@@ -5,6 +5,7 @@ use 5.036;
 use Moo;
 use Types::Standard qw(HashRef);
 use Slick::Methods  qw(METHODS);
+use Slick::Events   qw(EVENTS);
 use Carp            qw(croak);
 use Scalar::Util    qw(blessed);
 use List::Util      qw(first);
@@ -28,7 +29,7 @@ sub add {
     croak qq{Unrecognized HTTP method $method.}
       unless defined( grep { $_ eq $method } METHODS() );
 
-    chomp($route);
+    chomp( $route->{route} );
     my $uri =
         substr( $route->route, 0, 1 ) eq '/'
       ? substr( $route->route, 1 )
@@ -101,6 +102,41 @@ sub get {
     return $m->{methods}->{$method};
 }
 
+# Merge two route maps
+sub merge {
+    my $self   = shift;
+    my $other  = shift;
+    my $events = shift;
+
+    my @stack;
+
+    push( @stack,
+        $other->{_map}->{'/'} // croak qq{Invalid route map passed.} );
+
+    # FIXME: This may get slow on very large projects, but we'll see.
+    while ( my $p = pop @stack ) {
+        for ( keys $p->{children}->%* ) {
+            push( @stack, $p->{children}->{$_} );
+        }
+
+        for ( keys $p->{methods}->%* ) {
+            my $route = $p->{methods}->{$_};
+
+            # TODO: This sucks!
+            foreach my $event ( EVENTS()->@* ) {
+                $route->event_handlers->{$event} = [
+                    $events->{$event}->@*,
+                    $route->event_handlers->{$event}->@*
+                ];
+            }
+
+            $self->add( $route, $_ );
+        }
+    }
+
+    return $self;
+}
+
 1;
 
 =encoding utf8
@@ -125,11 +161,17 @@ Otherwise return C<undef>.
 
 Given a L<Slick::Route> and a uri (Str), add it to the Hash-Trie for later lookup.
 
+=head2 merge
+
+Merges two given L<Slick::RouteMap>s. This is the primary mechanism behind L<Slick::Router>.
+
 =head1 See also
 
 =over2
 
 =item * L<Slick>
+
+=item * L<Slick::Router>
 
 =item * L<Slick::Context>
 

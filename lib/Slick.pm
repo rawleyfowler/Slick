@@ -14,37 +14,14 @@ use Slick::Events qw(EVENTS BEFORE_DISPATCH AFTER_DISPATCH);
 use Slick::Database;
 use Slick::Methods qw(METHODS);
 use Slick::Route;
+use Slick::Router;
 use Slick::RouteMap;
 use Slick::Util;
 
-our $VERSION = '0.002';
+our $VERSION = '0.003';
 
 with 'Slick::EventHandler';
-
-foreach my $meth ( @{ METHODS() } ) {
-    Slick::Util::monkey_patch(
-        __PACKAGE__,
-        $meth => sub {
-            my ( $self, $route, $callback, $events ) = @_;
-
-            my $route_object = Slick::Route->new(
-                callback => $callback,
-                route    => $route
-            );
-
-            if ($events) {
-                foreach my $event ( EVENTS->@* ) {
-                    $route_object->on( $event, $_ )
-                      for ( @{ $events->{$event} } );
-                }
-            }
-
-            $self->handlers->add( $route_object, $meth );
-
-            return $route_object;
-        }
-    );
-}
+with 'Slick::RouteManager';
 
 has port => (
     is      => 'ro',
@@ -88,11 +65,6 @@ has dbs => (
     default => sub { return {}; }
 );
 
-has handlers => (
-    is      => 'rw',
-    default => sub { return Slick::RouteMap->new; }
-);
-
 has helpers => (
     is      => 'rw',
     isa     => HashRef,
@@ -126,7 +98,7 @@ sub _dispatch {
 
     my $method = lc( $request->method );
 
-    for ( @{ $self->_event_handlers->{ BEFORE_DISPATCH() } } ) {
+    for ( @{ $self->event_handlers->{ BEFORE_DISPATCH() } } ) {
         if ( !$_->( $self, $context ) ) {
             goto DONE;
         }
@@ -144,7 +116,7 @@ sub _dispatch {
     }
 
     $_->( $self, $context )
-      for ( @{ $self->_event_handlers->{ AFTER_DISPATCH() } } );
+      for ( @{ $self->event_handlers->{ AFTER_DISPATCH() } } );
 
   DONE:
 
@@ -152,14 +124,6 @@ sub _dispatch {
     $context->body = [] if $method eq 'head';
 
     return $context->to_psgi;
-}
-
-sub BUILD {
-    my $self = shift;
-
-    $self->{_event_handlers} = { map { $_ => [] } EVENTS->@* };
-
-    return $self;
 }
 
 sub helper {
@@ -222,6 +186,17 @@ sub run {
     say "Slick is listening on: http://$addr:$port\n";
 
     return $self->server->run( $self->app );
+}
+
+sub register {
+    my $self   = shift;
+    my $router = shift;
+
+    croak qq{Router cannot be undef.} unless $router;
+
+    $self->handlers->merge( $router->handlers, $router->event_handlers );
+
+    return $self;
 }
 
 # This is for users who want to use plackup
@@ -346,6 +321,14 @@ You can register more Plack middlewares with your application using the L<"middl
     $s->app;
 
 Converts the L<Slick> application to a PSGI runnable app.
+
+=head2 register
+
+    my $router = Slick::Router->new(base => '/foo');
+    
+    $s->register($router);
+
+Registers a L<Slick::Router> to the application. This includes calling C<merge> on the app's L<Slick::RouteMap>.
 
 =head2 banner
 
@@ -472,6 +455,8 @@ Inherited from L<Slick::EventHandler>.
 =head1 See also
 
 =over2
+
+=item * L<Slick::Router>
 
 =item * L<Slick::Context>
 
