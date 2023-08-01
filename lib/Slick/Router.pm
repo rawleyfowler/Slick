@@ -44,7 +44,7 @@ See L<Slick::EventHandler> and L<Slick::RouteManager>.
 
 =head1 See also
 
-=over2
+=over 2
 
 =item * L<Slick>
 

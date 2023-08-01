@@ -454,7 +454,7 @@ Inherited from L<Slick::EventHandler>.
 
 =head1 See also
 
-=over2
+=over 2
 
 =item * L<Slick::Router>
 

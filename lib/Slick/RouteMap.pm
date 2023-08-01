@@ -167,7 +167,7 @@ Merges two given L<Slick::RouteMap>s. This is the primary mechanism behind L<Sli
 
 =head1 See also
 
-=over2
+=over 2
 
 =item * L<Slick>
 

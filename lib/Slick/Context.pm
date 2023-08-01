@@ -234,7 +234,7 @@ and a bunch of other helpers to make it easy to handle HTTP in L<Slick>.
 
 Decodes the body of the L<Plack::Request> via the following:
 
-=over2
+=over 2
 
 =item * C<JSON> => L<JSON::Tiny>
 

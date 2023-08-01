@@ -70,7 +70,7 @@ Slick::RouteManager
 
 A L<Moo::Role> that allows the managing of routes via a L<Slick::RouteMap> and HTTP methods.
 
-=over2
+=over 2
 
 =item * L<Slick>
 

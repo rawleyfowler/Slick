@@ -30,3 +30,43 @@ sub BUILD {
 }
 
 1;
+
+=encoding utf8
+
+=head1 NAME
+
+Slick::DatabaseExecutor::Pg
+
+=head1 SYNOPSIS
+
+A child class of L<Slick::DatabaseExecutor>, handles all interactions with PostgreSQL, mostly just configuring the connection.
+
+=head1 See also
+
+=over 2
+
+=item * L<Slick>
+
+=item * L<Slick::RouteManager>
+
+=item * L<Slick::Context>
+
+=item * L<Slick::Database>
+
+=item * L<Slick::DatabaseExecutor>
+
+=item * L<Slick::DatabaseExecutor::MySQL>
+
+=item * L<Slick::EventHandler>
+
+=item * L<Slick::Events>
+
+=item * L<Slick::Methods>
+
+=item * L<Slick::RouteMap>
+
+=item * L<Slick::Util>
+
+=back
+
+=cut

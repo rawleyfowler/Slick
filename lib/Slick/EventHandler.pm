@@ -39,7 +39,6 @@ sub on {
 =encoding utf8
 
 =head1 NAME
-
 Slick::EventHandler
 
 =head1 SYNOPSIS
@@ -53,7 +52,7 @@ A L<Moo::Role> that allows the registering of events via a C<on> method.
 Registers a C<CodeRef> with a given event name. Only allows registering of events
 that exist within L<Slick::Events>.
 
-=over2
+=over 2
 
 =item * L<Slick::Context>
 
