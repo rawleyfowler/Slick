@@ -10,8 +10,28 @@ you can also take advantage of swappable backends and Plack middlewares extremel
 
 Currently, Slick supports `MySQL` and `Postgres` but there are plans to implement `Oracle` and `MS SQL Server`.
 
+## Philosophy
+
+Slick is aiming to become a "Batteries Included" framework for building REST API's and Micro-Services in
+Perl. This will include tooling for all sorts of Micro-Service concerns like Databases, Caching, Queues,
+User-Agents, and much more.
+
+### Goals
+
+- [x] Database management (auto-enabled)
+- [x] Migrations (auto-enabled)
+- [ ] CLI
+- [ ] Caching via Redis (optional)
+- [ ] RabbitMQ built-ins (optional)
+- [ ] AWS S3 support (optional)
+- [ ] User-Agents, including Client API exports
+- [ ] AWS SQS support (optional)
+
+*Note*: All of these features excluding database stuff will be enabled optionally at run-time.
+
 ## Examples
 
+### Single File App
 ```perl
 use 5.036;
 
@@ -57,6 +77,62 @@ $s->post('/users' => sub {
 
 $s->run; # Run the application.
 ```
+
+See the examples directory for this example.
+
+### Multi-file Router App
+
+```perl
+### INSIDE lib/MyApp/ItemRouter.pm
+
+package MyApp::ItemRouter;
+
+use base qw(Slick::Router);
+
+my $router = __PACKAGE__->new(base => '/items');
+
+$router->get('/{id}' => sub {
+    my ($app, $context) = @_;
+    my $item = $app->database('items')->select_one({ id => $context->param('id') });
+    $context->json($item);
+});
+
+$router->post('' => sub {
+    my ($app, $context) = @_;
+    my $new_item = $context->content;
+    
+    # Do some sort of validation
+    if (not $app->helper('item_validator')->validate($new_item)) {
+        $context->status(400)->json({ error => 'Bad Request' });
+    } 
+    else {
+        $app->database('items')->insert('items', $new_item);
+        $context->json($new_item);
+    }
+});
+
+sub router {
+    return $router;
+}
+
+1;
+
+### INSIDE OF YOUR RUN SCRIPT
+
+use 5.036;
+use lib 'lib';
+
+use Slick;
+use MyApp::ItemRouter;
+
+my $slick = Slick->new;
+
+$slick->register(MyApp::ItemRouter->router);
+
+$slick->run;
+```
+
+See the examples directory for this example.
 
 ### Running with `plackup`
 

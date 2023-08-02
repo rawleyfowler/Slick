@@ -1,8 +1,13 @@
 package Slick::Route;
 
+use 5.036;
+
 use Moo;
 use Types::Standard qw(CodeRef HashRef Str);
 use Slick::Events   qw(EVENTS BEFORE_DISPATCH AFTER_DISPATCH);
+use experimental    qw(try);
+
+no warnings qw(experimental::try);
 
 with 'Slick::EventHandler';
 
@@ -19,19 +24,34 @@ has callback => (
 );
 
 sub dispatch {
-    my ( $self, @args ) = @_;
+    my ( $self, $app, $context ) = @_;
+
+    my @args = ( $app, $context );
 
     for ( @{ $self->event_handlers->{ BEFORE_DISPATCH() } } ) {
-        if ( !$_->(@args) ) {
-            goto DONE;
+        try {
+            if ( !$_->(@args) ) {
+                goto DONE;
+            }
         }
+        catch ($e) {
+            push $context->stash->{'slick.errors'}->@*, Slick::Error->new($e);
+        };
     }
 
-    $self->callback->(@args);
+    try { $self->callback->(@args); }
+    catch ($e) {
+        push $context->stash->{'slick.errors'}->@*, Slick::Error->new($e)
+    };
 
     for ( @{ $self->event_handlers->{ AFTER_DISPATCH() } } ) {
-        if ( !$_->(@args) ) {
-            goto DONE;
+        try {
+            if ( !$_->(@args) ) {
+                goto DONE;
+            }
+        }
+        catch ($e) {
+            push $context->stash->{'slick.errors'}->@*, Slick::Error->new($e);
         }
     }
 

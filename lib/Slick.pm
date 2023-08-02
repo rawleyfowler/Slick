@@ -11,14 +11,18 @@ use Plack::Builder qw(builder enable);
 use Plack::Request;
 use Slick::Context;
 use Slick::Events qw(EVENTS BEFORE_DISPATCH AFTER_DISPATCH);
+use Slick::Error;
 use Slick::Database;
 use Slick::Methods qw(METHODS);
 use Slick::Route;
 use Slick::Router;
 use Slick::RouteMap;
 use Slick::Util;
+use experimental qw(try);
 
-our $VERSION = '0.003';
+no warnings qw(experimental::try);
+
+our $VERSION = '0.004';
 
 with 'Slick::EventHandler';
 with 'Slick::RouteManager';
@@ -45,11 +49,10 @@ has timeout => (
 );
 
 has env => (
-    is      => 'ro',
-    lazy    => 1,
+    is      => 'rw',
     isa     => Str,
     default => sub {
-        return $ENV{SLICK_ENV} || $ENV{PLACK_ENV} || 'dev';
+        return $ENV{SLICK_ENV} // $ENV{PLACK_ENV} // 'dev';
     }
 );
 
@@ -95,35 +98,54 @@ sub _dispatch {
     my $request = Plack::Request->new(shift);
 
     my $context = Slick::Context->new( request => $request, );
-
-    my $method = lc( $request->method );
+    my $method  = lc( $request->method );
 
     for ( @{ $self->event_handlers->{ BEFORE_DISPATCH() } } ) {
-        if ( !$_->( $self, $context ) ) {
-            goto DONE;
-        }
+        try { $_->( $self, $context ) // goto DONE; }
+        catch ($e) {
+            push $context->stash->{'slick.errors'}->@*, Slick::Error->new($e)
+        };
     }
 
     my $route =
       $self->handlers->get( $context->request->request_uri, $method, $context );
+
     if ( defined $route ) {
-        $route->dispatch( $self, $context );
+        try { $route->dispatch( $self, $context ); }
+        catch ($e) {
+            push $context->stash->{'slick.errors'}->@*, Slick::Error->new($e)
+        }
     }
     else {
         $context->status(405);
         $context->body('405 Method Not Supported');
-        goto DONE;
     }
 
-    $_->( $self, $context )
-      for ( @{ $self->event_handlers->{ AFTER_DISPATCH() } } );
+    for ( @{ $self->event_handlers->{ AFTER_DISPATCH() } } ) {
+        try { $_->( $self, $context ) // goto DONE; }
+        catch ($e) {
+            push $context->stash->{'slick.errors'}->@*, Slick::Error->new($e);
+        }
+    }
 
   DONE:
+
+    if ( $context->stash->{'slick.errors'}->@* && ( $self->env eq 'dev' ) ) {
+        say $_->error for $context->stash->{'slick.errors'}->@*;
+        $context->json(
+            [ map { $_->to_hash } $context->stash->{'slick.errors'}->@* ] );
+    }
 
     # HEAD requests only want headers.
     $context->body = [] if $method eq 'head';
 
     return $context->to_psgi;
+}
+
+sub BUILD {
+    my $self = shift;
+
+    return $self;
 }
 
 sub helper {
@@ -206,7 +228,9 @@ sub app {
     return builder {
         enable 'Plack::Middleware::AccessLog' => format => 'combined';
         enable $_->@* for $self->middlewares->@*;
-        sub { return $self->_dispatch(@_); }
+        sub {
+            return $self->_dispatch(@_);
+        }
     };
 }
 
@@ -279,6 +303,63 @@ has a migration, and also serves some JSON.
     });
 
     $s->run; # Run the application.
+
+=head3 A Multi-file application
+
+This is a multi-file application that uses L<Slick::Router>.
+
+    ### INSIDE OF YOUR ROUTER MODULE lib/MyApp/ItemRouter.pm
+
+    package MyApp::ItemRouter;
+
+    use base qw(Slick::Router);
+
+    my $router = __PACKAGE__->new(base => '/items');
+
+    $router->get('/{id}' => sub {
+        my ($app, $context) = @_;
+        my $item = $app->database('items')->select_one({ id => $context->param('id') });
+        $context->json($item);
+    });
+
+    $router->post('' => sub {
+        my ($app, $context) = @_;
+        my $new_item = $context->content;
+
+        # Do some sort of validation
+        if (not $app->helper('item_validator')->($new_item)) {
+            $context->status(400)->json({ error => 'Bad Request' });
+        } 
+        else {
+            $app->database('items')->insert('items', $new_item);
+            $context->json($new_item);
+        }
+    });
+
+    sub router {
+        return $router;
+    }
+
+    1;
+
+    ### INSIDE OF YOUR RUN SCRIPT 'app.pl'
+
+    use 5.036;
+    use lib 'lib';
+
+    use Slick;
+    use MyApp::ItemRouter;
+
+    my $slick = Slick->new;
+
+    $slick->helper(item_validator => sub {
+        return exists shift->{name};
+    });
+
+    # Register as many routers as you want!
+    $slick->register(MyApp::ItemRouter->router);
+
+    $slick->run;
 
 =head3 Running with plackup
 
@@ -477,6 +558,8 @@ Inherited from L<Slick::EventHandler>.
 =item * L<Slick::RouteMap>
 
 =item * L<Slick::Util>
+
+=item * L<Slick::Error>
 
 =back
 

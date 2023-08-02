@@ -92,6 +92,15 @@ $slick->get( '/redirect', sub { $_[1]->body( $_[1]->redirect('/bob') ) } );
 $slick->get( '/redirect_other',
     sub { $_[1]->body( $_[1]->redirect( '/bob', 301 ) ) } );
 
+$slick->get(
+    '/dies',
+    sub {
+        is rindex( $_[1]->stash->{'slick.errors'}->[0]->error, 'test die', 0 ),
+          0;
+    },
+    { before_dispatch => [ sub { die 'test die' } ] }
+);
+
 my $router = Slick::Router->new( base => '/foo' );
 $router->get( '/bob' => sub { return $_[1]->json( { foo => 'bar' } ); } );
 $slick->register($router);
@@ -230,5 +239,52 @@ $response = $slick->_dispatch($t);
 
 is $response->[0],      '200';
 is $response->[2]->[0], '{"foo":"bar"}';
+
+$t = {
+    QUERY_STRING    => '',
+    REMOTE_ADDR     => "127.0.0.1",
+    REMOTE_PORT     => 46604,
+    REQUEST_METHOD  => "GET",
+    REQUEST_URI     => "/foo/bob",
+    SCRIPT_NAME     => "",
+    SERVER_NAME     => "127.0.0.1",
+    SERVER_PORT     => 8000,
+    SERVER_PROTOCOL => "HTTP/1.1"
+};
+
+$response = $slick->_dispatch($t);
+
+is $response->[0],      '200';
+is $response->[2]->[0], '{"foo":"bar"}';
+
+$t = {
+    QUERY_STRING    => '',
+    REMOTE_ADDR     => "127.0.0.1",
+    REMOTE_PORT     => 46604,
+    REQUEST_METHOD  => "GET",
+    REQUEST_URI     => "/dies",
+    SCRIPT_NAME     => "",
+    SERVER_NAME     => "127.0.0.1",
+    SERVER_PORT     => 8000,
+    SERVER_PROTOCOL => "HTTP/1.1"
+};
+
+$response = $slick->_dispatch($t);
+
+my $e = Slick::Error->new('foo');
+
+is $e->error, 'foo';
+isa_ok $e, 'Slick::Error';
+is $e->error_type, 'SCALAR';
+
+isa_ok Slick::Error->new($e), 'Slick::Error';
+is Slick::Error->new($e)->error,      'foo';
+is Slick::Error->new($e)->error_type, 'SCALAR';
+
+$e = Slick::Error->new($slick);
+
+isa_ok $e, 'Slick::Error';
+is Slick::Error->new($e)->error,      $slick;
+is Slick::Error->new($e)->error_type, 'Slick';
 
 done_testing;

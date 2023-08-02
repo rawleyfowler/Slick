@@ -1,3 +1,9 @@
+0.004  2023-08-02
+  - Alpha release #4
+  - Add error handling for routes and events
+  - Add the Slick::Error class
+  - Various POD changes
+
 0.003  2023-08-01
   - Alpha release #3
   - Add routers allowing for easier use in multi-file projects

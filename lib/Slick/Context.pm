@@ -24,7 +24,7 @@ has id => (
 has stash => (
     is      => 'rw',
     isa     => HashRef,
-    default => sub { return {}; }
+    default => sub { return { 'slick.errors' => [] }; }
 );
 
 has request => (
@@ -117,7 +117,12 @@ sub query {
 }
 
 sub to_psgi {
-    my $response = shift->response;
+    my $self     = shift;
+    my $response = $self->response;
+
+    $response->{status} = 500
+      if $self->stash->{'slick.errors'}->@*;
+
     return [ $response->{status}, $response->{headers}, $response->{body} ];
 }
 
