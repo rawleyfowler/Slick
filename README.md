@@ -159,7 +159,7 @@ or
 
 In this example, running Slick with a [`Gazelle`](https://metacpan.org/pod/Gazelle) backend on port `8888` and address `0.0.0.0`.
 ```perl
-$s->run(server => 'Gazelle', port => 8888, addr => '0.0.0.0'); 
+$s->run(server => 'Plack::Handler::Gazelle', port => 8888, addr => '0.0.0.0'); 
 ```
 
 ### Using Plack Middlewares
