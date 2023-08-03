@@ -37,5 +37,6 @@ WriteMakefile(
         'YAML::Tiny'      => '1.74',
         'URL::Encode'     => '0.03',
     },
-    text => { TESTS => 't/*.t t/*/*.t it/*.t it/*/*.t' }
+    EXE_FILES => ['bin/slick'],
+    test      => { TESTS => 't/*.t t/*/*.t it/*.t it/*/*.t' }
 );
