@@ -1,9 +1,13 @@
 ## no critic
 use Test::More;
 
-use_ok 'Slick', 'Can use ok?';
+BEGIN {
+    use_ok 'Slick';
+    use_ok 'Slick::Error';
+    use_ok 'Slick::Router';
+}
 
-require Slick;
+use Slick;
 
 my $slick = Slick->new;
 
@@ -277,14 +281,14 @@ is $e->error, 'foo';
 isa_ok $e, 'Slick::Error';
 is $e->error_type, 'SCALAR';
 
-isa_ok Slick::Error->new($e), 'Slick::Error';
-is Slick::Error->new($e)->error,      'foo';
-is Slick::Error->new($e)->error_type, 'SCALAR';
+isa_ok( Slick::Error->new($e), 'Slick::Error' );
+is( Slick::Error->new($e)->error,      'foo' );
+is( Slick::Error->new($e)->error_type, 'SCALAR' );
 
 $e = Slick::Error->new($slick);
 
-isa_ok $e, 'Slick::Error';
-is Slick::Error->new($e)->error,      $slick;
-is Slick::Error->new($e)->error_type, 'Slick';
+isa_ok( $e, 'Slick::Error' );
+is( Slick::Error->new($e)->error,      $slick );
+is( Slick::Error->new($e)->error_type, 'Slick' );
 
 done_testing;
