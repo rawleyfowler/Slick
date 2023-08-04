@@ -126,6 +126,17 @@ sub to_psgi {
     return [ $response->{status}, $response->{headers}, $response->{body} ];
 }
 
+sub from_psgi {
+    my $self     = shift;
+    my $response = shift;
+
+    $self->response->{status}  = $response->[0];
+    $self->response->{headers} = $response->[1];
+    $self->response->{body}    = $response->[2];
+
+    return $self;
+}
+
 sub redirect {
     my ( $self, $location, $status ) = @_;
 
