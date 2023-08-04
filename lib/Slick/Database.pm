@@ -74,6 +74,7 @@ sub BUILD {
     }
 
     try {
+        no warnings;
         $self->dbi->do( $first_migration->{up} );
         $self->insert(
             'slick_migrations',

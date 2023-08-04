@@ -72,3 +72,45 @@ sub select_one {
 }
 
 1;
+
+=encoding utf8
+
+=head1 NAME
+
+Slick::DatabaseExecutor
+
+=head1 SYNOPSIS
+
+A L<Moo::Role> implemented by all of the databases supported by L<Slick>.
+
+=head1 See also
+
+=over2
+
+=item * L<Slick::CacheExecutor>
+
+=item * L<Slick::CacheExecutor::Redis>
+
+=item * L<Slick::CacheExecutor::Memcached>
+
+=item * L<Slick::Context>
+
+=item * L<Slick::Database>
+
+=item * L<Slick::DatabaseExecutor::MySQL>
+
+=item * L<Slick::DatabaseExecutor::Pg>
+
+=item * L<Slick::EventHandler>
+
+=item * L<Slick::Events>
+
+=item * L<Slick::Methods>
+
+=item * L<Slick::RouteMap>
+
+=item * L<Slick::Util>
+
+=back
+
+=cut

@@ -13,6 +13,7 @@ use Slick::Context;
 use Slick::Events qw(EVENTS BEFORE_DISPATCH AFTER_DISPATCH);
 use Slick::Error;
 use Slick::Database;
+use Slick::Cache;
 use Slick::Methods qw(METHODS);
 use Slick::Route;
 use Slick::Router;
@@ -22,7 +23,7 @@ use experimental qw(try);
 
 no warnings qw(experimental::try);
 
-our $VERSION = '0.004';
+our $VERSION = '0.005';
 
 with 'Slick::EventHandler';
 with 'Slick::RouteManager';
@@ -62,6 +63,13 @@ has server => (
 );
 
 has dbs => (
+    is      => 'ro',
+    lazy    => 1,
+    isa     => HashRef,
+    default => sub { return {}; }
+);
+
+has caches => (
     is      => 'ro',
     lazy    => 1,
     isa     => HashRef,
@@ -179,6 +187,16 @@ sub database {
     }
 
     return $self->dbs->{$name} // undef;
+}
+
+sub cache {
+    my ( $self, $name, @args ) = @_;
+
+    if (@args) {
+        return $self->caches->{$name} = Slick::Cache->new(@args);
+    }
+
+    return $self->caches->{$name} // undef;
 }
 
 # Runs the application with the server
@@ -428,9 +446,28 @@ You can overwrite the banner with something else if you like via:
 Creates and registers a database to the L<Slick> instance. The connection string should
 be a fully-qualified URI based DSN.
 
-    $s->datbaase('my_db');
+    $s->database('my_db');
 
 Retrieves the database if it exists, otherwise returns C<undef>.
+
+=head2 cache
+
+    # See Redis and Cache::Memcached on CPAN for arguments
+
+    # Create a Redis instance
+    $s->cache(
+        my_redis => type => 'redis',    # Slick Arguments
+        server   => '127.0.0.1:6379'    # Redis arguments
+    );
+
+    # Create a Memcached instance
+    $s->cache(
+        my_memcached => type          => 'memcached',   # Slick Arguments
+        servers      => ['127.0.0.1'] => debug => 1     # Cache::Memcached arguments
+    );
+
+Retrieves the cache if it exists, otherwise returns C<undef>. Basically L<"database"> but for caches.
+Note type is a required argument, it should either be C<'redis'> or C<'memcached'>.
 
 =head2 helper
 
