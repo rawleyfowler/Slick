@@ -50,3 +50,83 @@ qq{Attempted to use cache $cache to cache route but cache does not exist.};
 }
 
 1;
+
+=encoding utf8
+
+=head1 NAME
+
+Slick::Annotation
+
+=head1 SYNOPSIS
+
+A functional module for "annotations", simply functions that can compose
+nicely to add functionality to routes.
+
+=head1 cacheable
+
+    use 5.036;
+
+    use Slick;
+    use Slick::Annotation qw(cacheable);
+
+    my $s = Slick->new;
+
+    # See Redis and Cache::Memcached on CPAN for arguments
+
+    # Create a Redis instance
+    $s->cache(
+        my_redis => type => 'redis',    # Slick Arguments
+        server   => '127.0.0.1:6379'    # Cache::Memcached arguments
+    );
+
+    # Use your cache to cache your route
+    $s->get(
+        '/foobar' => cacheable(
+            'my_redis', # cache name
+            sub {
+                my ( $app, $context ) = @_;
+                return $context->json( { foo => 'bar' } );
+            }
+        )
+    );
+
+    $s->run;
+
+Declares a route sub-routine as "cacheable" meaning it will
+always return the same response, and retrieve that response from a
+specified cache. See L<Slick::Cache> for more information about
+caching.
+
+=head1 See also
+
+=over2
+
+=item * L<Slick::CacheExecutor>
+
+=item * L<Slick::CacheExecutor::Redis>
+
+=item * L<Slick::CacheExecutor::Memcached>
+
+=item * L<Slick::Context>
+
+=item * L<Slick::Database>
+
+=item * L<Slick::DatabaseExecutor>
+
+=item * L<Slick::DatabaseExecutor::MySQL>
+
+=item * L<Slick::DatabaseExecutor::Pg>
+
+=item * L<Slick::EventHandler>
+
+=item * L<Slick::Events>
+
+=item * L<Slick::Methods>
+
+=item * L<Slick::RouteMap>
+
+=item * L<Slick::Util>
+
+=back
+
+=cut

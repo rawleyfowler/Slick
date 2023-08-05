@@ -4,7 +4,11 @@ use Test::More;
 BEGIN {
     use_ok 'Slick';
     use_ok 'Slick::Error';
+    use_ok 'Slick::RouteMap';
+    use_ok 'Slick::Cache';
+    use_ok 'Slick::Database';
     use_ok 'Slick::Router';
+    use_ok 'Slick::Annotation';
 }
 
 use Slick;

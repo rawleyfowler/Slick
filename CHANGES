@@ -1,3 +1,9 @@
+0.006  2023-08-03
+  - Alpha release #6
+  - Add Slick::Annotation
+  - Add route based caching based on "annotation"
+  - Various POD fixes
+
 0.005  2023-08-03
   - Alpha release #5
   - Add Slick::Cache, Slick::CacheExecutor{,::Redis,::Memcached}
