@@ -23,7 +23,7 @@ use experimental qw(try);
 
 no warnings qw(experimental::try);
 
-our $VERSION = '0.006';
+our $VERSION = '0.007';
 
 with 'Slick::EventHandler';
 with 'Slick::RouteManager';
