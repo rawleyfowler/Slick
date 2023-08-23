@@ -150,12 +150,6 @@ sub _dispatch {
     return $context->to_psgi;
 }
 
-sub BUILD {
-    my $self = shift;
-
-    return $self;
-}
-
 sub helper {
     my ( $self, $name, $helper ) = @_;
 
