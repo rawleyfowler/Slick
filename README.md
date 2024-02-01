@@ -5,7 +5,7 @@ Slick is built on top of [DBI](https://metacpan.org/pod/DBI), [Plack](https://me
 and [Moo](https://metacpan.org/pod/Moo) and fits somewhere in-between the realms of Dancer and Mojo.
 
 Slick has everything you need to build a Database driven REST API, including built in support
-for Database connections, Migrations, and soon, route based Caching via Redis or Memcached. Since Slick is a Plack application,
+for Database connections, Migrations, and Caching via Redis or Memcached. Since Slick is a Plack application,
 you can also take advantage of swappable backends and Plack middlewares extremely simply.
 
 Currently, Slick supports `MySQL` and `Postgres` but there are plans to implement `Oracle` and `MS SQL Server`.
