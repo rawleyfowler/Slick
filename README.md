@@ -8,7 +8,7 @@ Slick has everything you need to build a Database driven REST API, including bui
 for Database connections, Migrations, and Caching via Redis or Memcached. Since Slick is a Plack application,
 you can also take advantage of swappable backends and Plack middlewares extremely simply.
 
-Currently, Slick supports `MySQL` and `Postgres` but there are plans to implement `Oracle` and `MS SQL Server`.
+Currently, Slick supports `MySQL`, `Redis`, `Memcached` and `Postgres` but there are plans to implement `Oracle` and `MS SQL Server`.
 
 ## Philosophy
 
