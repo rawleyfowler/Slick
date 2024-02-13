@@ -1,6 +1,6 @@
 # [Slick](https://metacpan.org/pod/Slick)
 
-Slick is an Object-Oriented Perl web-framework for building performant, and easy to refactor REST API's. 
+Slick is an Object-Oriented Perl web-framework for building performant, and easy to refactor web applications.
 Slick is built on top of [DBI](https://metacpan.org/pod/DBI), [Plack](https://metacpan.org/pod/Plack), 
 and [Moo](https://metacpan.org/pod/Moo) and fits somewhere in-between the realms of Dancer and Mojo.
 
