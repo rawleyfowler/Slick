@@ -12,7 +12,7 @@ sub BUILD {
 
     my $db = split /\//x, $self->{connection}->path;
 
-    my $dsn = defined $db ? "dbi:mysql:dbname=$db" : "dbi:Pg";
+    my $dsn = defined $db ? "dbi:mysql:dbname=$db" : "dbi:mysql";
     if ( my $host = $self->{connection}->host ) { $dsn .= ";host=$host"; }
     if ( my $port = $self->{connection}->port ) { $dsn .= ";port=$port"; }
 

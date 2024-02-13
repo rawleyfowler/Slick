@@ -35,8 +35,6 @@ User-Agents, and much more.
 
 ### Single File App
 ```perl
-use 5.036;
-
 use Slick;
 
 my $s = Slick->new;
