@@ -145,7 +145,7 @@ sub _dispatch {
     }
 
     # HEAD requests only want headers.
-    $context->{body} = [] if $method eq 'head';
+    $context->response->{body} = [''] if $method eq 'head';
 
     return $context->to_psgi;
 }
