@@ -7,7 +7,7 @@ WriteMakefile(
     NAME         => 'Slick',
     VERSION_FROM => 'lib/Slick.pm',
     ABSTRACT     => qq{A PSGI framework for building REST api's in Perl.},
-    license      => 'artistic_2',
+    license      => 'mit',
     META_MERGE   => {
         dynamic_config => 0,
         'meta-spec'    => { version   => 2 },
