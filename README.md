@@ -234,6 +234,7 @@ Slick supports caching using [`Memcached`](https://memcached.org) or [`Redis`](h
 use 5.036;
 
 use Slick;
+use Slick::Annotation qw(cacheable);
 
 my $s = Slick->new;
 
