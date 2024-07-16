@@ -170,7 +170,7 @@ You can register more Plack middlewares with your application very easily!
 my $s = Slick->new;
 
 $s->middleware('Deflater')
-  ->middleware('Session' => store => 'file')
+  ->middleware('Session', store => 'file')
   ->middleware('Debug', panels => [ qw(DBITrace Memory) ]);
 
 $s->run; # or $s->app depending on if you want to use plackup.
@@ -292,7 +292,7 @@ Slick is open to any and all contributions.
 
 * Always format with the provided `.perltidyrc`
 * Always use `Perl::Critic` set to severity `3`
-* Unpack subroutine arguments using array-destructuring when there are greater than 2 arguments
+* Unpack subroutine arguments using array-destructuring when there are 2 or more elements
 
 ## License
 
