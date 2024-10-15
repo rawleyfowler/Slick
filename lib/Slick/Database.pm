@@ -69,6 +69,12 @@ sub BUILD {
         $self->{_executor} =
           Slick::DatabaseExecutor::MySQL->new( connection => $uri );
     }
+    elsif ( $uri->scheme =~ /^sqlite[3]?$/x ) {
+        require_module('Slick::DatabaseExecutor::SQLite');
+        $self->{type} = 'sqlite';
+        $self->{_executor} =
+          Slick::DatabaseExecutor::SQLite->new( connection => $uri );
+    }
     else {
         croak q{Unknown scheme or un-supported database: } . $uri->scheme;
     }

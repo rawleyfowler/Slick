@@ -15,3 +15,4 @@
 /MYMETA.*
 /*.gz
 *.tar*
+*.db

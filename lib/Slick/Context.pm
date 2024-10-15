@@ -124,10 +124,6 @@ sub query {
 sub to_psgi {
     my $self     = shift;
     my $response = $self->response;
-
-    $response->{status} = 500
-      if $self->stash->{'slick.errors'}->@*;
-
     return [ $response->{status}, $response->{headers}, $response->{body} ];
 }
 
@@ -177,7 +173,7 @@ sub json {
     require_module('JSON::Tiny');
 
     $self->header( 'Content-Type', 'application/json; encoding=utf8' );
-    $self->body( encode_json $body);
+    $self->body( encode_json $body );
 
     return $self;
 }

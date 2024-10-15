@@ -4,7 +4,7 @@ use 5.036;
 
 use Moo;
 use Carp qw(croak);
-use DBI;
+use DBIx::Connector;
 
 with 'Slick::DatabaseExecutor';
 
@@ -20,11 +20,12 @@ sub BUILD {
     my ( $username, $password ) =
       split /\:/x, [ split /\@/x, $self->{connection}->authority ]->[0];
 
-    $self->{dbi} = DBI->connect( $dsn, $username // '', $password // '',
-        $self->dbi_options );
-
-    croak qq{Couldn't connect to database: } . $self->{connection}
-      unless $self->dbi->ping;
+    $self->{dbh} = DBIx::Connector->new(
+        $dsn,
+        $username // '',
+        $password // '',
+        $self->dbi_options
+    );
 
     return $self;
 }

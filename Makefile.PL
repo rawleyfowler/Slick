@@ -6,7 +6,7 @@ use ExtUtils::MakeMaker;
 WriteMakefile(
     NAME         => 'Slick',
     VERSION_FROM => 'lib/Slick.pm',
-    ABSTRACT     => qq{A PSGI framework for building REST api's in Perl.},
+    ABSTRACT     => qq{A PSGI framework for building web applications in Perl},
     license      => 'mit',
     META_MERGE   => {
         dynamic_config => 0,
@@ -36,6 +36,7 @@ WriteMakefile(
         'Try::Tiny'       => '0',
         'YAML::Tiny'      => '1.74',
         'URL::Encode'     => '0.03',
+        'DBIx::Connector' => '0.59'
     },
     EXE_FILES => ['bin/slick'],
     test      => { TESTS => 't/*.t t/*/*.t it/*.t it/*/*.t' }

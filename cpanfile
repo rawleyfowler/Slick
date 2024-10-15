@@ -7,6 +7,7 @@ requires 'Carp', '0';
 requires 'URI', '5.19';
 requires 'SQL::Abstract', '2.000001';
 requires 'DBI', '1.643';
+requires 'DBIx::Connector' => '0.59';
 requires 'JSON::Tiny', '0.58';
 requires 'URI::Query', '0.16';
 requires 'Try::Tiny', '0';

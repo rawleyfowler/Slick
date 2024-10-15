@@ -15,13 +15,16 @@ has error_type => (
     required => 1
 );
 
+has when => ( is => 'ro' );
+
 around new => sub {
     return $_[2]
       if blessed( $_[2] ) && ( blessed( $_[2] ) eq 'Slick::Error' );
 
     return bless {
         error_type => blessed( $_[2] ) // 'SCALAR',
-        error      => $_[2]
+        error      => $_[2],
+        when       => $_[3] ? $_[3] : 'UNKNOWN'
       },
       $_[1];
 };

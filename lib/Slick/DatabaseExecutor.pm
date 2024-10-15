@@ -34,7 +34,7 @@ has sql => (
     default => sub { SQL::Abstract->new; }
 );
 
-has dbi => ( is => 'ro', handles => [ 'do', 'prepare' ] );
+has dbh => ( is => 'ro' );
 
 has connection => ( is => 'ro' );
 
@@ -50,7 +50,21 @@ has dbi_options => (
     }
 );
 
-## no critic qw(Subroutines::ProhibitBuiltinHomonyms)
+sub dbi {
+    my ($self) = @_;
+    return $self->dbh->dbh;
+}
+
+sub do {
+    my ($self) = @_;
+    return $self->dbi->do(@_);
+}
+
+sub prepare {
+    my ($self) = @_;
+    return $self->dbi->prepare(@_);
+}
+
 sub select {
     my ( $self, @args ) = @_;
     my ( $stmt, @bind ) = $self->sql->select(@args);

@@ -2,6 +2,9 @@ package Slick;
 
 use 5.036;
 
+use strict;
+use warnings;
+
 use Moo;
 use Types::Standard qw(HashRef ArrayRef Int Str);
 use Module::Runtime qw(require_module);
@@ -23,7 +26,7 @@ use experimental qw(try);
 
 no warnings qw(experimental::try);
 
-our $VERSION = '0.007';
+our $VERSION = '0.008';
 
 with 'Slick::EventHandler';
 with 'Slick::RouteManager';
@@ -111,7 +114,8 @@ sub _dispatch {
     for ( @{ $self->event_handlers->{ BEFORE_DISPATCH() } } ) {
         try { $_->( $self, $context ) // goto DONE; }
         catch ($e) {
-            push $context->stash->{'slick.errors'}->@*, Slick::Error->new($e)
+            push $context->stash->{'slick.errors'}->@*,
+              Slick::Error->new( $e, BEFORE_DISPATCH )
         };
     }
 
@@ -121,7 +125,10 @@ sub _dispatch {
     if ( defined $route ) {
         try { $route->dispatch( $self, $context ); }
         catch ($e) {
-            push $context->stash->{'slick.errors'}->@*, Slick::Error->new($e)
+            if ( $self->env eq 'dev' ) {
+                push $context->stash->{'slick.errors'}->@*,
+                  Slick::Error->new( $e, 'ROUTE' );
+            }
         }
     }
     else {
@@ -132,7 +139,8 @@ sub _dispatch {
     for ( @{ $self->event_handlers->{ AFTER_DISPATCH() } } ) {
         try { $_->( $self, $context ) // goto DONE; }
         catch ($e) {
-            push $context->stash->{'slick.errors'}->@*, Slick::Error->new($e);
+            push $context->stash->{'slick.errors'}->@*,
+              Slick::Error->new( $e, AFTER_DISPATCH );
         }
     }
 
@@ -143,9 +151,16 @@ sub _dispatch {
         $context->json(
             [ map { $_->to_hash } $context->stash->{'slick.errors'}->@* ] );
     }
+    elsif ( $context->stash->{'slick.errors'}->@* ) {
+        say $_->error for $context->stash->{'slick.errors'}->@*;
+        $context->status(500);
+        $context->html(
+'<html><body><h1>500 Internal Server Error</h1><hr><p>We&apos;re sorry, something went wrong!</p></body></html>'
+        );
+    }
 
     # HEAD requests only want headers.
-    $context->response->{body} = [''] if $method eq 'head';
+    $context->response->{body} = [''] if lc($method) eq 'head';
 
     return $context->to_psgi;
 }
@@ -153,11 +168,21 @@ sub _dispatch {
 sub helper {
     my ( $self, $name, $helper ) = @_;
 
+    croak
+      qq[Invalid helper name $name, should not include white-space characters.]
+      if $name =~ /\s/gxm;
+
     if ( exists $self->helpers->{$name} ) {
         return $self->helpers->{$name};
     }
 
-    return $self->helpers->{$name} = $helper;
+    my $is_code = ref($helper) eq 'CODE';
+
+    Slick::Util::monkey_patch( __PACKAGE__,
+        $name => $self->helpers->{$name} =
+          ( $is_code ? $helper : sub { $helper } ) );
+
+    return $helper;
 }
 
 sub middleware {
@@ -174,10 +199,12 @@ sub middleware {
 #
 # $slick->database(foo => 'postgresql://foo@bar:5432/mydb'); # Attempts to create a database labeled foo
 sub database {
-    my ( $self, $name, $conn ) = @_;
+    my ( $self, $name, $dsn ) = @_;
 
-    if ( defined $conn ) {
-        return $self->dbs->{$name} = Slick::Database->new( conn => $conn );
+    if ( defined $dsn ) {
+        my $database = Slick::Database->new( conn => $dsn );
+        $self->dbs->{$name} = $database;
+        $self->helper( $name => $database );
     }
 
     return $self->dbs->{$name} // undef;
@@ -187,7 +214,9 @@ sub cache {
     my ( $self, $name, @args ) = @_;
 
     if (@args) {
-        return $self->caches->{$name} = Slick::Cache->new(@args);
+        my $cache = Slick::Cache->new(@args);
+        $self->caches->{$name} = $cache;
+        $self->helper( $name => $cache );
     }
 
     return $self->caches->{$name} // undef;
@@ -226,7 +255,8 @@ sub register {
     my $self   = shift;
     my $router = shift;
 
-    croak qq{Router cannot be undef.} unless $router;
+    croak qq{Cannot register router: $router}
+      unless $router && ref($router) && $router->isa('Slick::Router');
 
     $self->handlers->merge( $router->handlers, $router->event_handlers );
 

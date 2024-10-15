@@ -45,20 +45,20 @@ my $s = Slick->new;
 $s->database(my_db => 'postgresql://user:password@127.0.0.1:5432/schema');
 $s->database(corporate_db => 'mysql://corporate:secure_password@127.0.0.1:3306/schema');
 
-$s->database('my_db')->migration(
+$s->my_db->migration(
 	'create_user_table', # id
 	'CREATE TABLE user ( id SERIAL PRIMARY KEY AUTOINCREMENT, name TEXT, age INT );', #up
 	'DROP TABLE user;' # down
 );
 
-$s->database('my_db')->migrate_up; # Migrates all pending migrations
+$s->my_db->migrate_up; # Migrates all pending migrations
 
 $s->get('/users/{id}' => sub {
     my $app = shift;
     my $context = shift;
 
     # Queries follow SQL::Abstract's notations
-    my $user = $app->database('my_db')->select_one('user', { id => $context->param('id') });
+    my $user = $app->my_db->select_one('user', { id => $context->param('id') });
 
     # Render the user hashref as JSON.
     $context->json($user);
@@ -70,7 +70,7 @@ $s->post('/users' => sub {
     
     my $new_user = $context->content; # Will be decoded from JSON, YAML, or URL encoded (See JSON::Tiny, YAML::Tiny, and URL::Encode)
     
-    $app->database('my_db')->insert('user', $new_user);
+    $app->my_db->insert('user', $new_user);
     
     $context->json($new_user);
 });
@@ -87,13 +87,15 @@ See the examples directory for this example.
 
 package MyApp::ItemRouter;
 
-use base qw(Slick::Router);
+use Moo;
+
+extends 'Slick::Router';
 
 my $router = __PACKAGE__->new(base => '/items');
 
 $router->get('/{id}' => sub {
     my ($app, $context) = @_;
-    my $item = $app->database('items')->select_one({ id => $context->param('id') });
+    my $item = $app->items_db->select_one({ id => $context->param('id') });
     $context->json($item);
 });
 
@@ -102,11 +104,11 @@ $router->post('' => sub {
     my $new_item = $context->content;
     
     # Do some sort of validation
-    if (not $app->helper('item_validator')->validate($new_item)) {
+    if (not $app->item_validator->validate($new_item)) {
         $context->status(400)->json({ error => 'Bad Request' });
     } 
     else {
-        $app->database('items')->insert('items', $new_item);
+        $app->items_db->insert('items', $new_item);
         $context->json($new_item);
     }
 });
@@ -117,7 +119,7 @@ sub router {
 
 1;
 
-### INSIDE OF YOUR RUN SCRIPT
+package main;
 
 use 5.036;
 use lib 'lib';
@@ -127,6 +129,7 @@ use MyApp::ItemRouter;
 
 my $slick = Slick->new;
 
+$slick->database(items_db => 'sqlite://items.db');
 $slick->register(MyApp::ItemRouter->router);
 
 $slick->run;
@@ -207,16 +210,16 @@ Queries in Slick are built with [`SQL::Abstract`](https://metacpan.org/pod/SQL::
 is done for you already!
 
 ```perl
-my $users = $s->database('my_postgres')
+my $users = $s->my_postgres
               ->select('users', [ 'id', 'name' ]); # SELECT id, name FROM users;
 
-my $user = $s->database('my_postgres')
+my $user = $s->my_postgres
              ->select_one('users', [ 'id', 'name', 'age' ], { id => 1 }); # SELECT id, name, age FROM users WHERE id = 1;
              
-$s->database('my_postgres')
+$s->my_postgres
   ->insert('users', { name => 'Bob', age => 23 }); # INSERT INTO users (name, age) VALUES ('Bob', 23);
   
-$s->database('my_postgres')
+$s->my_postgres
   ->update('users', { name => 'John' }, { id => 2 }); # UPDATE users SET name = 'John' WHERE id = 2;
 ```
 
@@ -252,7 +255,7 @@ $s->cache(
     servers      => ['127.0.0.1'] => debug => 1     # Cache::Memcached arguments
 );
 
-$s->cache('my_redis')->set( something => 'awesome' );
+$s->my_redis->set( something => 'awesome' );
 
 $s->get(
     '/foo' => sub {

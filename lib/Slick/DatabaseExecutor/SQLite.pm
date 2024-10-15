@@ -5,17 +5,17 @@ use warnings;
 
 use Moo;
 use Carp qw(croak);
-use DBI;
+use DBIx::Connector;
 
 with 'Slick::DatabaseExecutor';
 
 sub BUILD {
     my $self = shift;
 
-    my $db  = $self->{connection};
-    my $dsn = "db:SQLite:dbname=$db";
+    my ( undef, $db ) = split '://', $self->{connection};
+    my $dsn = "dbi:SQLite:dbname=$db";
 
-    $self->{dbi} = DBI->connect( $dsn, '', '' );
+    $self->{dbh} = DBIx::Connector->new( $dsn, '', '' );
 
     return $self;
 }
