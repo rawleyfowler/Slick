@@ -40,8 +40,9 @@ has auto_migrate => (
 
 has migrations => (
     is      => 'ro',
+    isa     => HashRef,
     default => sub {
-        return { 'create_slick_migrations_table' => $first_migration };
+        return {};
     }
 );
 
@@ -79,8 +80,6 @@ sub BUILD {
         croak q{Unknown scheme or un-supported database: } . $uri->scheme;
     }
 
-    $self->migrate_up if $self->auto_migrate;
-
     return $self;
 }
 
@@ -90,13 +89,14 @@ sub migrate_up {
 
     eval { $self->dbi->do( $first_migration->{up} ); };
 
-    my $run_migrations = $self->select( 'slick_migrations', ['id'] );
+    my @done_migrations =
+      map { $_->{id} } @{ $self->select( 'slick_migrations', ['id'] ) };
 
     if ($id) {
         croak qq{Couldn't find migration: $id}
           unless exists $self->migrations->{$id};
 
-        if ( not( grep { $_->{id} eq $id } $run_migrations->@* ) ) {
+        if ( not( grep { $_ eq $id } @done_migrations ) ) {
             my $migration = $self->migrations->{$id};
             $self->dbi->do( $migration->{up} )
               || croak qq{Couldn't migrate up $id - } . $self->dbi->errstr;
@@ -114,19 +114,18 @@ sub migrate_up {
         }
     }
     else {
-        for ( keys $self->migrations->%* ) {
-            my $key = $_;
-            next
-              if grep { $_->{id} eq $key } $run_migrations->@*;
+        while ( my ( $key, $mig ) = each $self->migrations->%* ) {
+            next if grep { $_ eq $key } @done_migrations;
 
-            $self->dbi->do( $self->migration->{$_}->{up} )
+            $self->dbi->do( $self->migrations->{$key}->{up} )
               || croak qq{Couldn't migrate up $_ - } . $self->dbi->errstr;
+
             $self->insert(
                 'slick_migrations',
                 {
                     id   => $key,
-                    up   => $_->{up},
-                    down => $_->{down}
+                    up   => $mig->{up},
+                    down => $mig->{down}
                 }
             );
 

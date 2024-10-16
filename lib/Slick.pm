@@ -133,7 +133,7 @@ sub _dispatch {
     }
     else {
         $context->status(405);
-        $context->body('405 Method Not Supported');
+        $context->html('<h1>405 Method Not Supported</h1>');
     }
 
     for ( @{ $self->event_handlers->{ AFTER_DISPATCH() } } ) {
@@ -266,6 +266,10 @@ sub register {
 # This is for users who want to use plackup
 sub app {
     my $self = shift;
+
+    for ( values %{ $self->dbs } ) {
+        $_->migrate_up if $_->auto_migrate;
+    }
 
     return builder {
         enable 'Plack::Middleware::AccessLog' => format => 'combined';
