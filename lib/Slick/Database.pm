@@ -79,18 +79,7 @@ sub BUILD {
         croak q{Unknown scheme or un-supported database: } . $uri->scheme;
     }
 
-    try {
-        no warnings;
-        $self->dbi->do( $first_migration->{up} );
-        $self->insert(
-            'slick_migrations',
-            {
-                id   => 'create_slick_migrations_table',
-                up   => $first_migration->{up},
-                down => $first_migration->{down}
-            }
-        );
-    }
+    $self->migrate_up if $self->auto_migrate;
 
     return $self;
 }
@@ -98,6 +87,8 @@ sub BUILD {
 sub migrate_up {
     my $self = shift;
     my $id   = shift;
+
+    eval { $self->dbi->do( $first_migration->{up} ); };
 
     my $run_migrations = $self->select( 'slick_migrations', ['id'] );
 

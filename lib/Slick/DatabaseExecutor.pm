@@ -51,17 +51,17 @@ has dbi_options => (
 );
 
 sub dbi {
-    my ($self) = @_;
+    my $self = shift;
     return $self->dbh->dbh;
 }
 
 sub do {
-    my ($self) = @_;
+    my $self = shift;
     return $self->dbi->do(@_);
 }
 
 sub prepare {
-    my ($self) = @_;
+    my $self = shift;
     return $self->dbi->prepare(@_);
 }
 

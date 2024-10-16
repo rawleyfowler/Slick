@@ -314,20 +314,20 @@ has a migration, and also serves some JSON.
     $s->database(my_db => 'postgresql://user:password@127.0.0.1:5432/schema');
     $s->database(corporate_db => 'mysql://corporate:secure_password@127.0.0.1:3306/schema');
 
-    $s->database('my_db')->migration(
+    $s->my_db->migration(
         'create_user_table', # id
         'CREATE TABLE user ( id SERIAL PRIMARY KEY AUTOINCREMENT, name TEXT, age INT );', #up
         'DROP TABLE user;' # down
     );
 
-    $s->database('my_db')->migrate_up; # Migrates all pending migrations
+    $s->my_db->migrate_up; # Migrates all pending migrations
 
     $s->get('/users/{id}' => sub {
         my $app = shift;
         my $context = shift;
 
         # Queries follow SQL::Abstract's notations
-        my $user = $app->database('my_db')->select_one('user', { id => $context->params('id') });
+        my $user = $app->my_db->select_one('user', { id => $context->params('id') });
 
         # Render the user hashref as JSON.
         $context->json($user);
